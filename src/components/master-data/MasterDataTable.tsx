@@ -60,27 +60,23 @@ export function MasterDataTable<T extends { id?: string; code?: string }>({
   }, [data, sortConfig]);
 
   if (data.length === 0) {
-    return (
-      <div className="p-12 text-center text-gray-500">
-        Nessun dato trovato.
-      </div>
-    );
+    return <div className="p-12 text-center text-slate-500">Nessun dato trovato.</div>;
   }
 
   return (
     <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b border-[#1a1a1a]/5">
+      <thead className="bg-slate-50 border-b border-slate-200">
         <tr>
           {columns.map((col, idx) => (
             <th
               key={idx}
-              className={`px-6 py-4 text-left font-medium text-gray-500 uppercase tracking-wider text-xs ${col.className || ''} ${col.sortable ? 'cursor-pointer hover:bg-gray-100 select-none' : ''}`}
+              className={`px-6 py-4 text-left font-semibold text-slate-500 uppercase tracking-wider text-xs ${col.className || ''} ${col.sortable ? 'cursor-pointer hover:bg-slate-100 select-none' : ''}`}
               onClick={() => handleSort(col)}
             >
               <div className="flex items-center gap-2">
                 {col.header}
                 {col.sortable && typeof col.accessor !== 'function' && (
-                  <span className="text-gray-400">
+                  <span className="text-slate-400">
                     {sortConfig.key === col.accessor ? (
                       sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                     ) : (
@@ -91,36 +87,27 @@ export function MasterDataTable<T extends { id?: string; code?: string }>({
               </div>
             </th>
           ))}
-          <th className="px-6 py-4 text-right font-medium text-gray-500 uppercase tracking-wider text-xs w-24">
-            Azioni
-          </th>
+          <th className="px-6 py-4 text-right font-semibold text-slate-500 uppercase tracking-wider text-xs w-24">Azioni</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-[#1a1a1a]/5">
+      <tbody className="divide-y divide-slate-100">
         {sortedData.map((item, rowIdx) => (
-          <tr key={String(item[keyField]) || rowIdx} className="hover:bg-gray-50/50 transition-colors">
+          <tr key={String(item[keyField]) || rowIdx} className="hover:bg-slate-50/80 transition-colors">
             {columns.map((col, colIdx) => (
-              <td key={colIdx} className={`px-6 py-4 text-[#1a1a1a] ${col.className || ''}`}>
-                {typeof col.accessor === 'function'
-                  ? col.accessor(item)
-                  : (item[col.accessor] as React.ReactNode)}
+              <td key={colIdx} className={`px-6 py-4 text-slate-800 ${col.className || ''}`}>
+                {typeof col.accessor === 'function' ? col.accessor(item) : (item[col.accessor] as React.ReactNode)}
               </td>
             ))}
             <td className="px-6 py-4 text-right">
               <div className="flex items-center justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(item)}
-                  className="h-8 w-8 text-gray-400 hover:text-[#1a1a1a]"
-                >
+                <Button variant="ghost" size="icon" onClick={() => onEdit(item)} className="h-8 w-8 text-slate-400 hover:text-slate-700">
                   <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => onDelete(item)}
-                  className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                  className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

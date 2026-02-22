@@ -21,35 +21,33 @@ export const MasterDataLayout: React.FC<MasterDataLayoutProps> = ({
   addButtonLabel = 'Aggiungi Nuovo',
 }) => {
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-serif font-bold text-[#1a1a1a]">{title}</h2>
-          <p className="text-gray-500 mt-1">Gestione anagrafica e configurazioni</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+          <p className="text-slate-500 mt-1">Gestione anagrafica e configurazioni operative.</p>
         </div>
-        <Button onClick={onAdd} className="bg-[#1a1a1a] text-white px-6 py-2 rounded-lg hover:bg-black/90 flex items-center gap-2">
+        <Button onClick={onAdd} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           {addButtonLabel}
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-[#1a1a1a]/5 overflow-hidden">
-        <div className="p-4 border-b border-[#1a1a1a]/5 bg-gray-50/50 flex items-center gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/70 flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
               type="text"
-              placeholder="Cerca..."
+              placeholder="Cerca per codice, nome o descrizione..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 bg-white"
             />
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
-          {children}
-        </div>
+
+        <div className="overflow-x-auto">{children}</div>
       </div>
     </div>
   );

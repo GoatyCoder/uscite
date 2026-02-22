@@ -565,54 +565,54 @@ export default function App() {
   // const generatePDF = async () => { ... }
 
   return (
-    <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans">
       {/* Sidebar Navigation */}
       <div className="flex flex-col md:flex-row min-h-screen">
         <Sidebar currentView={view} onViewChange={setView} />
 
-        <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 lg:p-10 overflow-y-auto">
           {/* Top Bar / Company Header */}
-          <div className="flex justify-between items-center mb-10 pb-4 border-b border-black/5">
+          <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-xl shadow-sm border border-black/5">
-                <Home className="w-5 h-5 text-indigo-600" />
+              <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                <Home className="w-5 h-5 text-cyan-700" />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-black/40 leading-none">Azienda Attiva</p>
+                <p className="text-[10px] uppercase font-semibold text-slate-500 leading-none">Azienda Attiva</p>
                 <p className="text-sm font-bold">{senderName}</p>
               </div>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] uppercase font-bold text-black/40 leading-none">Stato Sistema</p>
+                <p className="text-[10px] uppercase font-semibold text-slate-500 leading-none">Stato Sistema</p>
                 <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 justify-end">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Operativo
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setView('IMPOSTAZIONI')}
-                className="p-2 hover:bg-black/5 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors border border-transparent hover:border-slate-200"
               >
-                <Settings className="w-5 h-5 text-black/40" />
+                <Settings className="w-5 h-5 text-slate-500" />
               </button>
             </div>
           </div>
 
           {view === 'DASHBOARD' && (
-            <div className="max-w-6xl mx-auto space-y-10">
-              <header className="flex justify-between items-end border-b border-black/10 pb-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+              <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-end border-b border-slate-200 pb-6">
                 <div>
-                  <h2 className="text-4xl font-serif font-bold tracking-tight">Dashboard Operativa</h2>
-                  <p className="text-sm text-black/40 font-medium">Panoramica delle attività logistiche e tracciabilità</p>
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Dashboard Operativa</h2>
+                  <p className="text-sm text-slate-500 font-medium">Panoramica operativa di logistica, spedizioni e tracciabilità GS1.</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] uppercase font-bold text-black/40">Data Odierna</p>
+                  <p className="text-[10px] uppercase font-semibold text-slate-500">Data Odierna</p>
                   <p className="text-sm font-bold">{new Date().toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-black/5 space-y-2">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-2">
                   <div className="flex justify-between items-start">
                     <div className="bg-indigo-50 p-3 rounded-2xl">
                       <Package className="w-6 h-6 text-indigo-600" />
@@ -622,43 +622,43 @@ export default function App() {
                     </span>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-black/40">Pedane Totali</p>
+                    <p className="text-[10px] uppercase font-semibold text-slate-500">Pedane Totali</p>
                     <p className="text-3xl font-serif font-bold">{history.length}</p>
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-black/5 space-y-2">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-2">
                   <div className="flex justify-between items-start">
                     <div className="bg-amber-50 p-3 rounded-2xl">
                       <AlertCircle className="w-6 h-6 text-amber-600" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-black/40">In Attesa DDT</p>
+                    <p className="text-[10px] uppercase font-semibold text-slate-500">In Attesa DDT</p>
                     <p className="text-3xl font-serif font-bold text-amber-600">{history.filter(p => !p.ddtId).length}</p>
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-black/5 space-y-2">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-2">
                   <div className="flex justify-between items-start">
                     <div className="bg-emerald-50 p-3 rounded-2xl">
                       <FileText className="w-6 h-6 text-emerald-600" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-black/40">DDT Emessi</p>
+                    <p className="text-[10px] uppercase font-semibold text-slate-500">DDT Emessi</p>
                     <p className="text-3xl font-serif font-bold text-emerald-600">{ddts.length}</p>
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-black/5 space-y-2">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-2">
                   <div className="flex justify-between items-start">
                     <div className="bg-blue-50 p-3 rounded-2xl">
                       <WeightIcon className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-black/40">Peso Totale Spedito</p>
+                    <p className="text-[10px] uppercase font-semibold text-slate-500">Peso Totale Spedito</p>
                     <p className="text-3xl font-serif font-bold text-blue-600">
                       {(history || []).reduce((acc, p) => acc + parseFloat(p.totalNetWeight || '0'), 0).toFixed(0)} <span className="text-sm">kg</span>
                     </p>
@@ -667,8 +667,8 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-black/5 overflow-hidden">
-                  <div className="p-6 border-b border-black/5 flex justify-between items-center">
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                     <h3 className="font-bold text-lg">Ultime Pedane Create</h3>
                     <button onClick={() => setView('STORICO')} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
                       Vedi tutto <ArrowRight className="w-3 h-3" />
@@ -676,17 +676,17 @@ export default function App() {
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                      <thead className="bg-[#f9f9f9] border-b border-black/5">
+                      <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-6 py-4 text-[10px] uppercase font-bold text-black/40">SSCC</th>
-                          <th className="px-6 py-4 text-[10px] uppercase font-bold text-black/40">Destinatario</th>
-                          <th className="px-6 py-4 text-[10px] uppercase font-bold text-black/40">Stato</th>
-                          <th className="px-6 py-4 text-[10px] uppercase font-bold text-black/40">Data</th>
+                          <th className="px-6 py-4 text-[10px] uppercase font-semibold text-slate-500">SSCC</th>
+                          <th className="px-6 py-4 text-[10px] uppercase font-semibold text-slate-500">Destinatario</th>
+                          <th className="px-6 py-4 text-[10px] uppercase font-semibold text-slate-500">Stato</th>
+                          <th className="px-6 py-4 text-[10px] uppercase font-semibold text-slate-500">Data</th>
                         </tr>
                       </thead>
                       <tbody>
                         {history.slice(0, 5).map((p) => (
-                          <tr key={p.id} className="border-b border-black/5 hover:bg-black/5 transition-colors">
+                          <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4 font-mono text-xs font-bold">{p.sscc}</td>
                             <td className="px-6 py-4 text-sm">{recipients.find(r => r.code === p.recipientCode)?.name || p.recipientCode}</td>
                             <td className="px-6 py-4">
@@ -700,12 +700,12 @@ export default function App() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-xs text-black/40">{p.date.split(',')[0]}</td>
+                            <td className="px-6 py-4 text-xs text-slate-500">{p.date.split(',')[0]}</td>
                           </tr>
                         ))}
                         {history.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="px-6 py-10 text-center text-black/40 text-sm">Nessuna pedana registrata</td>
+                            <td colSpan={4} className="px-6 py-10 text-center text-slate-500 text-sm">Nessuna pedana registrata</td>
                           </tr>
                         )}
                       </tbody>
@@ -713,31 +713,31 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="bg-[#1a1a1a] text-white rounded-[2rem] p-8 space-y-6">
+                <div className="bg-slate-900 text-white rounded-2xl p-8 space-y-6 shadow-xl">
                   <h3 className="font-bold text-lg">Azioni Rapide</h3>
                   <div className="space-y-3">
                     <button 
                       onClick={() => setView('PALLET')}
-                      className="w-full bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-white/90 transition-all"
+                      className="w-full bg-white text-slate-900 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-slate-100 transition-all"
                     >
                       <Plus className="w-5 h-5" /> Nuova Pedana
                     </button>
                     <button 
                       onClick={() => setView('DDT')}
-                      className="w-full bg-white/10 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-white/20 transition-all"
+                      className="w-full bg-white/10 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/10"
                     >
                       <FileText className="w-5 h-5" /> Crea Nuovo DDT
                     </button>
                     <button 
                       onClick={() => setView('ARTICOLI')}
-                      className="w-full bg-white/10 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-white/20 transition-all"
+                      className="w-full bg-white/10 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/10"
                     >
                       <Tag className="w-5 h-5" /> Gestisci Articoli
                     </button>
                   </div>
                   <div className="pt-6 border-t border-white/10">
                     <p className="text-[10px] uppercase font-bold text-white/40 mb-2">Prossimo SSCC</p>
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/10">
                       <p className="font-mono text-lg font-bold text-emerald-400">{currentSSCC}</p>
                     </div>
                   </div>
@@ -871,7 +871,7 @@ export default function App() {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Cliente</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Cliente</label>
                       <select 
                         value={selectedRecipientCode}
                         onChange={(e) => {
@@ -888,7 +888,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Numero DDT</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Numero DDT</label>
                       <input 
                         type="text" 
                         value={currentDdtNumber}
@@ -899,7 +899,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Data DDT</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Data DDT</label>
                       <input 
                         type="date" 
                         value={currentDdtDate}
@@ -912,7 +912,7 @@ export default function App() {
                       <p className="text-[10px] uppercase font-bold text-indigo-600">Dati Trasporto Legali</p>
                       
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Vettore</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Vettore</label>
                         <input 
                           type="text" 
                           value={carrierName}
@@ -923,7 +923,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Causale Trasporto</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Causale Trasporto</label>
                         <input 
                           type="text" 
                           value={transportReason}
@@ -933,7 +933,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Aspetto dei Beni</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Aspetto dei Beni</label>
                         <input 
                           type="text" 
                           value={goodsAppearance}
@@ -943,7 +943,7 @@ export default function App() {
                       </div>
 
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Inizio Trasporto (Data/Ora)</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Inizio Trasporto (Data/Ora)</label>
                         <input 
                           type="datetime-local" 
                           value={transportStartDateTime}
@@ -954,7 +954,7 @@ export default function App() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Porto</label>
+                          <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Porto</label>
                           <select 
                             value={port}
                             onChange={(e) => setPort(e.target.value)}
@@ -965,7 +965,7 @@ export default function App() {
                           </select>
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Posti Pallet</label>
+                          <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Posti Pallet</label>
                           <div className="w-full bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 text-sm font-bold text-indigo-700">
                             {selectedPalletIds.length}
                           </div>
@@ -974,7 +974,7 @@ export default function App() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Targa Motrice</label>
+                          <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Targa Motrice</label>
                           <input 
                             type="text" 
                             value={licensePlate}
@@ -984,7 +984,7 @@ export default function App() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Targa Rimorchio</label>
+                          <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Targa Rimorchio</label>
                           <input 
                             type="text" 
                             value={trailerPlate}
@@ -1242,7 +1242,7 @@ export default function App() {
                             <Package className="w-6 h-6 text-black/60 group-hover:text-indigo-600" />
                           </div>
                           <div>
-                            <p className="text-[10px] uppercase font-bold text-black/40 leading-none mb-1">SSCC</p>
+                            <p className="text-[10px] uppercase font-semibold text-slate-500 leading-none mb-1">SSCC</p>
                             <p className="font-mono font-bold text-lg">{entry.sscc}</p>
                           </div>
                         </div>
@@ -1325,7 +1325,7 @@ export default function App() {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Ragione Sociale</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Ragione Sociale</label>
                       <input 
                         type="text" 
                         value={senderName}
@@ -1334,7 +1334,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Indirizzo Sede</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Indirizzo Sede</label>
                       <input 
                         type="text" 
                         value={senderAddress}
@@ -1344,7 +1344,7 @@ export default function App() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">P.IVA / C.F.</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">P.IVA / C.F.</label>
                         <input 
                           type="text" 
                           value={senderVat}
@@ -1353,7 +1353,7 @@ export default function App() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Telefono</label>
+                        <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Telefono</label>
                         <input 
                           type="text" 
                           value={senderPhone}
@@ -1363,7 +1363,7 @@ export default function App() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Email / PEC</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Email / PEC</label>
                       <input 
                         type="email" 
                         value={senderEmail}
@@ -1382,7 +1382,7 @@ export default function App() {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Prefisso Aziendale GS1</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Prefisso Aziendale GS1</label>
                       <input 
                         type="text" 
                         value={companyPrefix}
@@ -1393,7 +1393,7 @@ export default function App() {
                       <p className="text-[9px] text-black/40 mt-1 italic">Utilizzato per generare SSCC e GTIN</p>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-black/40 mb-1 block">Prossimo Numero Seriale SSCC</label>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Prossimo Numero Seriale SSCC</label>
                       <input 
                         type="number" 
                         value={serialNumber}
