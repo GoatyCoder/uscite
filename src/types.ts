@@ -8,6 +8,10 @@ export interface MasterArticle {
   unitWeight: string; // Utilizzato solo se weightType è FIXED
   weightType: 'FIXED' | 'VARIABLE';
   defaultPackagingId: string;
+  // --- GS1 strict profile (articolo) ---
+  requiresLot: boolean;
+  requiresHarvestDate: boolean; // Per richiesta attuale resta opzionale di default
+  netWeightAi: '3102' | 'NONE';
 }
 
 export interface MasterPackaging {

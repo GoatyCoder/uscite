@@ -301,7 +301,11 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       }
     }
 
-    if (totals.net > 0) {
+    const shouldEmitWeight = uniqueArticleCodes.length === 1
+      ? (firstArticle?.netWeightAi ?? '3102') === '3102'
+      : true;
+
+    if (totals.net > 0 && shouldEmitWeight) {
       const weightAi3102 = Math.round(totals.net * 100).toString().padStart(6, '0');
       gs1HumanReadable += `(3102)${weightAi3102}`;
       gs1BarcodeText += `(3102)${weightAi3102}`;
@@ -333,6 +337,25 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       setWarning('Seleziona un cliente valido prima di generare il PDF.');
       return;
     }
+
+    for (const line of lines) {
+      const article = articles.find(a => a.code === line.articleCode);
+      if (!article) {
+        setWarning('Ogni riga deve avere un articolo valido prima di generare il PDF.');
+        return;
+      }
+
+      if (article.requiresLot && !line.batch.trim()) {
+        setWarning(`Lotto obbligatorio per l'articolo ${article.description}.`);
+        return;
+      }
+
+      if (article.requiresHarvestDate && !line.harvestDate.trim()) {
+        setWarning(`Data raccolta obbligatoria per l'articolo ${article.description}.`);
+        return;
+      }
+    }
+
     setWarning(null);
 
     const doc = new jsPDF({
