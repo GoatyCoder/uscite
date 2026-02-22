@@ -107,6 +107,46 @@ const formatHarvestDateGS1 = (dateStr: string): string => {
   return dateStr.replace(/-/g, '');
 };
 
+
+const DEMO_ARTICLES: MasterArticle[] = [
+  { code: 'ART01', description: 'Mele Gala 75/80', gtin: '8012345000012', origin: '380', um: 'KG', saleType: 'KG_VARIABLE', unitWeight: '0', weightType: 'VARIABLE', unitsPerCase: '1', netWeightPerUnitKg: '0.000', netWeightPerCaseKg: '0.000', defaultPackagingId: 'PACK01' },
+  { code: 'ART02', description: 'Pere Abate 14/16', gtin: '8012345000029', origin: '380', um: 'KG', saleType: 'KG_FIXED', unitWeight: '15', weightType: 'FIXED', unitsPerCase: '1', netWeightPerUnitKg: '15.000', netWeightPerCaseKg: '15.000', defaultPackagingId: 'PACK02' },
+  { code: 'ART03', description: 'Uva Bianca Senza Semi 10x500g', gtin: '08012345000036', origin: '380', um: 'PZ', saleType: 'PZ', unitWeight: '5.000', weightType: 'FIXED', unitsPerCase: '10', netWeightPerUnitKg: '0.500', netWeightPerCaseKg: '5.000', defaultPackagingId: 'PACK04' },
+  { code: 'ART04', description: 'Pomodorini Ciliegino 8x250g', gtin: '08012345000043', origin: '380', um: 'PZ', saleType: 'PZ', unitWeight: '2.000', weightType: 'FIXED', unitsPerCase: '8', netWeightPerUnitKg: '0.250', netWeightPerCaseKg: '2.000', defaultPackagingId: 'PACK03' },
+  { code: 'ART05', description: 'Kiwi Verde sfuso', gtin: '08012345000050', origin: '380', um: 'KG', saleType: 'KG_VARIABLE', unitWeight: '0', weightType: 'VARIABLE', unitsPerCase: '1', netWeightPerUnitKg: '0.000', netWeightPerCaseKg: '0.000', defaultPackagingId: 'PACK01' },
+  { code: 'ART06', description: 'Arance Navel 12kg', gtin: '08012345000067', origin: '724', um: 'KG', saleType: 'KG_FIXED', unitWeight: '12.000', weightType: 'FIXED', unitsPerCase: '1', netWeightPerUnitKg: '12.000', netWeightPerCaseKg: '12.000', defaultPackagingId: 'PACK02' }
+];
+
+const DEMO_PACKAGINGS: MasterPackaging[] = [
+  { id: 'PACK01', name: 'Cartone 40x60', tare: '0.6', isPooling: false },
+  { id: 'PACK02', name: 'Cassa Legno', tare: '1.5', isPooling: false },
+  { id: 'PACK03', name: 'CPR 40x60', tare: '1.2', isPooling: true },
+  { id: 'PACK04', name: 'IFCO 40x60', tare: '1.1', isPooling: true },
+  { id: 'PACK05', name: 'Cestino PET 500g', tare: '0.04', isPooling: false },
+  { id: 'PACK06', name: 'Vassoio Cartone 30x40', tare: '0.25', isPooling: false }
+];
+
+const DEMO_PALLETS: MasterPallet[] = [
+  { id: 'PAL01', name: 'EPAL (80x120)', tare: '25', isPooling: true },
+  { id: 'PAL02', name: 'Philips (100x120)', tare: '30', isPooling: true },
+  { id: 'PAL03', name: 'Mezza Pedana (60x80)', tare: '12', isPooling: false },
+  { id: 'PAL04', name: 'Plastica (80x120)', tare: '15', isPooling: false }
+];
+
+const DEMO_RECIPIENTS: MasterRecipient[] = [
+  { code: 'CL01', name: 'GDO Logistica Nord', address: 'Interporto Blocco A, 20100 Milano (MI)' },
+  { code: 'CL02', name: 'Centro Distribuzione Centro', address: 'Via dei Trasporti 8, 40100 Bologna (BO)' },
+  { code: 'CL03', name: 'Mercato Ortofrutticolo Sud', address: 'Zona Industriale Lotto 12, 70100 Bari (BA)' }
+];
+
+const DEFAULT_COMPANY_PREFIX = '8012345';
+const DEFAULT_SERIAL_NUMBER = 1;
+const DEFAULT_SENDER_NAME = 'Azienda Agricola Rossi';
+const DEFAULT_SENDER_ADDRESS = 'Via delle Vigne 12, 00100 Roma (RM)';
+const DEFAULT_SENDER_VAT = '01234567890';
+const DEFAULT_SENDER_PHONE = '+39 080 1234567';
+const DEFAULT_SENDER_EMAIL = 'info@aziendaagricola.it';
+
 // --- COMPONENTE PRINCIPALE ---
 
 export default function App() {
@@ -116,45 +156,22 @@ export default function App() {
   // Master Data State (Persisted)
   const [articles, setArticles] = useState<MasterArticle[]>(() => {
     const saved = localStorage.getItem('gs1_articles');
-    return saved ? JSON.parse(saved) : [
-      { code: 'ART01', description: 'Mele Gala 75/80', gtin: '8012345000012', origin: '380', um: 'KG', saleType: 'KG_VARIABLE', unitWeight: '0', weightType: 'VARIABLE', unitsPerCase: '1', netWeightPerUnitKg: '0.000', netWeightPerCaseKg: '0.000', defaultPackagingId: 'PACK01' },
-      { code: 'ART02', description: 'Pere Abate 14/16', gtin: '8012345000029', origin: '380', um: 'KG', saleType: 'KG_FIXED', unitWeight: '15', weightType: 'FIXED', unitsPerCase: '1', netWeightPerUnitKg: '15.000', netWeightPerCaseKg: '15.000', defaultPackagingId: 'PACK02' },
-      { code: 'ART03', description: 'Uva Bianca Senza Semi 10x500g', gtin: '08012345000036', origin: '380', um: 'PZ', saleType: 'PZ', unitWeight: '5.000', weightType: 'FIXED', unitsPerCase: '10', netWeightPerUnitKg: '0.500', netWeightPerCaseKg: '5.000', defaultPackagingId: 'PACK04' },
-      { code: 'ART04', description: 'Pomodorini Ciliegino 8x250g', gtin: '08012345000043', origin: '380', um: 'PZ', saleType: 'PZ', unitWeight: '2.000', weightType: 'FIXED', unitsPerCase: '8', netWeightPerUnitKg: '0.250', netWeightPerCaseKg: '2.000', defaultPackagingId: 'PACK03' },
-      { code: 'ART05', description: 'Kiwi Verde sfuso', gtin: '08012345000050', origin: '380', um: 'KG', saleType: 'KG_VARIABLE', unitWeight: '0', weightType: 'VARIABLE', unitsPerCase: '1', netWeightPerUnitKg: '0.000', netWeightPerCaseKg: '0.000', defaultPackagingId: 'PACK01' },
-      { code: 'ART06', description: 'Arance Navel 12kg', gtin: '08012345000067', origin: '724', um: 'KG', saleType: 'KG_FIXED', unitWeight: '12.000', weightType: 'FIXED', unitsPerCase: '1', netWeightPerUnitKg: '12.000', netWeightPerCaseKg: '12.000', defaultPackagingId: 'PACK02' }
-    ];
+    return saved ? JSON.parse(saved) : DEMO_ARTICLES;
   });
 
   const [packagings, setPackagings] = useState<MasterPackaging[]>(() => {
     const saved = localStorage.getItem('gs1_packagings');
-    return saved ? JSON.parse(saved) : [
-      { id: 'PACK01', name: 'Cartone 40x60', tare: '0.6', isPooling: false },
-      { id: 'PACK02', name: 'Cassa Legno', tare: '1.5', isPooling: false },
-      { id: 'PACK03', name: 'CPR 40x60', tare: '1.2', isPooling: true },
-      { id: 'PACK04', name: 'IFCO 40x60', tare: '1.1', isPooling: true },
-      { id: 'PACK05', name: 'Cestino PET 500g', tare: '0.04', isPooling: false },
-      { id: 'PACK06', name: 'Vassoio Cartone 30x40', tare: '0.25', isPooling: false }
-    ];
+    return saved ? JSON.parse(saved) : DEMO_PACKAGINGS;
   });
 
   const [palletMasters, setPalletMasters] = useState<MasterPallet[]>(() => {
     const saved = localStorage.getItem('gs1_pallets');
-    return saved ? JSON.parse(saved) : [
-      { id: 'PAL01', name: 'EPAL (80x120)', tare: '25', isPooling: true },
-      { id: 'PAL02', name: 'Philips (100x120)', tare: '30', isPooling: true },
-      { id: 'PAL03', name: 'Mezza Pedana (60x80)', tare: '12', isPooling: false },
-      { id: 'PAL04', name: 'Plastica (80x120)', tare: '15', isPooling: false }
-    ];
+    return saved ? JSON.parse(saved) : DEMO_PALLETS;
   });
 
   const [recipients, setRecipients] = useState<MasterRecipient[]>(() => {
     const saved = localStorage.getItem('gs1_recipients');
-    return saved ? JSON.parse(saved) : [
-      { code: 'CL01', name: 'GDO Logistica Nord', address: 'Interporto Blocco A, 20100 Milano (MI)' },
-      { code: 'CL02', name: 'Centro Distribuzione Centro', address: 'Via dei Trasporti 8, 40100 Bologna (BO)' },
-      { code: 'CL03', name: 'Mercato Ortofrutticolo Sud', address: 'Zona Industriale Lotto 12, 70100 Bari (BA)' }
-    ];
+    return saved ? JSON.parse(saved) : DEMO_RECIPIENTS;
   });
 
   const [history, setHistory] = useState<PalletHistory[]>(() => {
@@ -168,13 +185,13 @@ export default function App() {
   });
 
   // Configurazione Aziendale
-  const [companyPrefix, setCompanyPrefix] = useState(() => localStorage.getItem('gs1_prefix') || '8012345');
-  const [serialNumber, setSerialNumber] = useState(() => parseInt(localStorage.getItem('gs1_serial') || '1'));
-  const [senderName, setSenderName] = useState(() => localStorage.getItem('gs1_sender_name') || 'Azienda Agricola Rossi');
-  const [senderAddress, setSenderAddress] = useState(() => localStorage.getItem('gs1_sender_address') || 'Via delle Vigne 12, 00100 Roma (RM)');
-  const [senderVat, setSenderVat] = useState(() => localStorage.getItem('gs1_sender_vat') || '01234567890');
-  const [senderPhone, setSenderPhone] = useState(() => localStorage.getItem('gs1_sender_phone') || '+39 080 1234567');
-  const [senderEmail, setSenderEmail] = useState(() => localStorage.getItem('gs1_sender_email') || 'info@aziendaagricola.it');
+  const [companyPrefix, setCompanyPrefix] = useState(() => localStorage.getItem('gs1_prefix') || DEFAULT_COMPANY_PREFIX);
+  const [serialNumber, setSerialNumber] = useState(() => parseInt(localStorage.getItem('gs1_serial') || String(DEFAULT_SERIAL_NUMBER)));
+  const [senderName, setSenderName] = useState(() => localStorage.getItem('gs1_sender_name') || DEFAULT_SENDER_NAME);
+  const [senderAddress, setSenderAddress] = useState(() => localStorage.getItem('gs1_sender_address') || DEFAULT_SENDER_ADDRESS);
+  const [senderVat, setSenderVat] = useState(() => localStorage.getItem('gs1_sender_vat') || DEFAULT_SENDER_VAT);
+  const [senderPhone, setSenderPhone] = useState(() => localStorage.getItem('gs1_sender_phone') || DEFAULT_SENDER_PHONE);
+  const [senderEmail, setSenderEmail] = useState(() => localStorage.getItem('gs1_sender_email') || DEFAULT_SENDER_EMAIL);
 
   // Sessione Pallet Corrente - REMOVED (Managed in PalletCompositionPage)
   // const [lines, setLines] = useState<PalletLine[]>([...]);
@@ -288,6 +305,64 @@ export default function App() {
       setDdts(ddts.filter(d => d.id !== id));
       setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
     }
+  };
+
+
+  const handleResetToDemo = () => {
+    if (!confirm('Confermi il reset totale? Verranno cancellati i dati locali e ripristinati i dati demo.')) {
+      return;
+    }
+
+    const keysToClear = [
+      'gs1_prefix',
+      'gs1_serial',
+      'gs1_articles',
+      'gs1_packagings',
+      'gs1_pallets',
+      'gs1_recipients',
+      'gs1_history',
+      'gs1_ddts',
+      'gs1_sender_name',
+      'gs1_sender_address',
+      'gs1_sender_vat',
+      'gs1_sender_phone',
+      'gs1_sender_email'
+    ];
+
+    keysToClear.forEach((key) => localStorage.removeItem(key));
+
+    setArticles(DEMO_ARTICLES);
+    setPackagings(DEMO_PACKAGINGS);
+    setPalletMasters(DEMO_PALLETS);
+    setRecipients(DEMO_RECIPIENTS);
+    setHistory([]);
+    setDdts([]);
+    setCompanyPrefix(DEFAULT_COMPANY_PREFIX);
+    setSerialNumber(DEFAULT_SERIAL_NUMBER);
+    setSenderName(DEFAULT_SENDER_NAME);
+    setSenderAddress(DEFAULT_SENDER_ADDRESS);
+    setSenderVat(DEFAULT_SENDER_VAT);
+    setSenderPhone(DEFAULT_SENDER_PHONE);
+    setSenderEmail(DEFAULT_SENDER_EMAIL);
+
+    setSelectedRecipientCode('');
+    setCurrentDdtNumber('');
+    setCurrentDdtDate(new Date().toISOString().split('T')[0]);
+    setCarrierName('Vettore Proprio');
+    setCarrierAddress('');
+    setTransportReason('Vendita');
+    setGoodsAppearance('Colli su Pedane');
+    setPort('Franco');
+    setLicensePlate('');
+    setTrailerPlate('');
+    setTransportStartDateTime(new Date().toISOString().slice(0, 16));
+    setSelectedPalletIds([]);
+    setEditingPallet(null);
+    setEditingDdt(null);
+    setSearchQuery('');
+    setView('DASHBOARD');
+
+    alert('Reset completato: ripristinati i dati demo.');
   };
 
   const startEditDdt = (ddt: MasterDDT) => {
@@ -1426,7 +1501,7 @@ export default function App() {
                   <button className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Esporta JSON
                   </button>
-                  <button className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                  <button onClick={handleResetToDemo} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Reset Totale
                   </button>
                 </div>
