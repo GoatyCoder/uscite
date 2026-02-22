@@ -38,7 +38,10 @@ import {
   PalletLine, 
   PalletHistory, 
   MasterDDT, 
-  ViewMode 
+  ViewMode,
+  UserRole,
+  AppUser,
+  AuditEvent
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { ArticlesPage } from './pages/ArticlesPage';
@@ -54,6 +57,26 @@ import { Button } from './components/ui/Button';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  ADMIN: 'Amministratore',
+  SPEDIZIONI: 'Responsabile Spedizioni',
+  OPERATORE: 'Operatore Logistica',
+  AUDITOR: 'Auditor',
+};
+
+const ROLE_PERMISSIONS: Record<UserRole, {
+  canEditMasterData: boolean;
+  canIssueDdt: boolean;
+  canDeletePallet: boolean;
+  canDeleteDdt: boolean;
+}> = {
+  ADMIN: { canEditMasterData: true, canIssueDdt: true, canDeletePallet: true, canDeleteDdt: true },
+  SPEDIZIONI: { canEditMasterData: true, canIssueDdt: true, canDeletePallet: true, canDeleteDdt: false },
+  OPERATORE: { canEditMasterData: false, canIssueDdt: false, canDeletePallet: false, canDeleteDdt: false },
+  AUDITOR: { canEditMasterData: false, canIssueDdt: false, canDeletePallet: false, canDeleteDdt: false },
+};
 
 // --- LOGICA GS1 ---
 
@@ -168,6 +191,19 @@ export default function App() {
   const [senderPhone, setSenderPhone] = useState(() => localStorage.getItem('gs1_sender_phone') || '+39 080 1234567');
   const [senderEmail, setSenderEmail] = useState(() => localStorage.getItem('gs1_sender_email') || 'info@aziendaagricola.it');
 
+  const [currentUser, setCurrentUser] = useState<AppUser>(() => {
+    const saved = localStorage.getItem('gs1_current_user');
+    return saved ? JSON.parse(saved) : {
+      id: 'u-admin',
+      fullName: 'Mario Rossi',
+      role: 'ADMIN' as UserRole,
+    };
+  });
+  const [auditLog, setAuditLog] = useState<AuditEvent[]>(() => {
+    const saved = localStorage.getItem('gs1_audit_log');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Sessione Pallet Corrente - REMOVED (Managed in PalletCompositionPage)
   // const [lines, setLines] = useState<PalletLine[]>([...]);
 
@@ -207,6 +243,20 @@ export default function App() {
 
   // Filtri e Ricerca
   const [searchQuery, setSearchQuery] = useState('');
+  const permissions = ROLE_PERMISSIONS[currentUser.role];
+
+
+  const logAuditEvent = (event: Omit<AuditEvent, 'id' | 'timestamp' | 'userId' | 'userName' | 'userRole'>) => {
+    const payload: AuditEvent = {
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      userId: currentUser.id,
+      userName: currentUser.fullName,
+      userRole: currentUser.role,
+      ...event,
+    };
+    setAuditLog(prev => [payload, ...prev].slice(0, 3000));
+  };
 
   // Sincronizzazione localStorage
   useEffect(() => {
@@ -223,7 +273,9 @@ export default function App() {
     localStorage.setItem('gs1_sender_vat', senderVat);
     localStorage.setItem('gs1_sender_phone', senderPhone);
     localStorage.setItem('gs1_sender_email', senderEmail);
-  }, [companyPrefix, serialNumber, articles, recipients, history, ddts, senderName, senderAddress, senderVat, senderPhone, senderEmail]);
+    localStorage.setItem('gs1_current_user', JSON.stringify(currentUser));
+    localStorage.setItem('gs1_audit_log', JSON.stringify(auditLog));
+  }, [companyPrefix, serialNumber, articles, recipients, history, ddts, senderName, senderAddress, senderVat, senderPhone, senderEmail, currentUser, auditLog]);
 
   // Calcolo SSCC corrente
   const currentSSCC = useMemo(() => {
@@ -246,6 +298,12 @@ export default function App() {
         totalGrossWeight: totals.gross,
         totalTare: totals.tare
       } : h));
+      logAuditEvent({
+        action: 'PALLET_UPDATED',
+        entityType: 'PALLET',
+        entityId: id,
+        summary: `Pedana ${sscc} aggiornata`,
+      });
       setEditingPallet(null);
       setView('STORICO');
     } else {
@@ -261,10 +319,20 @@ export default function App() {
         totalTare: totals.tare
       };
       setHistory([newEntry, ...history]);
+      logAuditEvent({
+        action: 'PALLET_CREATED',
+        entityType: 'PALLET',
+        entityId: newEntry.id,
+        summary: `Nuova pedana ${sscc} registrata`,
+      });
     }
   };
 
   const deletePallet = (id: string) => {
+    if (!permissions.canDeletePallet) {
+      alert('Il ruolo corrente non può eliminare pedane.');
+      return;
+    }
     const pallet = history.find(p => p.id === id);
     if (pallet?.ddtId) {
       alert('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
@@ -272,13 +340,30 @@ export default function App() {
     }
     if (confirm('Sei sicuro di voler eliminare questa pedana dallo storico?')) {
       setHistory(history.filter(p => p.id !== id));
+      logAuditEvent({
+        action: 'PALLET_DELETED',
+        entityType: 'PALLET',
+        entityId: id,
+        summary: `Pedana ${pallet?.sscc || id} eliminata dallo storico`,
+      });
     }
   };
 
   const deleteDdt = (id: string) => {
+    if (!permissions.canDeleteDdt) {
+      alert('Il ruolo corrente non può eliminare DDT emessi.');
+      return;
+    }
     if (confirm('Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.')) {
+      const targetDdt = ddts.find(d => d.id === id);
       setDdts(ddts.filter(d => d.id !== id));
       setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
+      logAuditEvent({
+        action: 'DDT_DELETED',
+        entityType: 'DDT',
+        entityId: id,
+        summary: `DDT ${targetDdt?.number || id} eliminato`,
+      });
     }
   };
 
@@ -300,6 +385,10 @@ export default function App() {
   };
 
   const createDDT = () => {
+    if (!permissions.canIssueDdt) {
+      alert('Il ruolo corrente non può emettere DDT.');
+      return;
+    }
     if (!selectedRecipientCode || !currentDdtNumber || selectedPalletIds.length === 0) {
       alert('Compila tutti i campi e seleziona almeno una pedana');
       return;
@@ -334,12 +423,24 @@ export default function App() {
         return p;
       }));
       setEditingDdt(null);
+      logAuditEvent({
+        action: 'DDT_UPDATED',
+        entityType: 'DDT',
+        entityId: ddtId,
+        summary: `DDT ${newDdt.number} aggiornato`,
+      });
     } else {
       setDdts([newDdt, ...ddts]);
       // Aggiorna la storia delle pedane con il riferimento al DDT
       setHistory(history.map(p => 
         selectedPalletIds.includes(p.id) ? { ...p, ddtId } : p
       ));
+      logAuditEvent({
+        action: 'DDT_CREATED',
+        entityType: 'DDT',
+        entityId: ddtId,
+        summary: `DDT ${newDdt.number} emesso con ${(newDdt.palletIds || []).length} pedane`,
+      });
     }
 
     // Reset sessione DDT
@@ -998,10 +1099,10 @@ export default function App() {
 
                     <button 
                       onClick={createDDT}
-                      disabled={!selectedRecipientCode || !currentDdtNumber || selectedPalletIds.length === 0}
+                      disabled={!permissions.canIssueDdt || !selectedRecipientCode || !currentDdtNumber || selectedPalletIds.length === 0}
                       className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-200"
                     >
-                      {editingDdt ? 'Salva Modifiche DDT' : 'Crea Documento'}
+                      {permissions.canIssueDdt ? (editingDdt ? 'Salva Modifiche DDT' : 'Crea Documento') : 'Ruolo non autorizzato'}
                     </button>
                   </div>
 
@@ -1192,8 +1293,9 @@ export default function App() {
                             </button>
                             <button 
                               onClick={() => deleteDdt(ddt.id)}
-                              className="p-2 hover:bg-white rounded-xl text-red-600 transition-colors shadow-sm"
-                              title="Elimina"
+                              disabled={!permissions.canDeleteDdt}
+                              className="p-2 hover:bg-white rounded-xl text-red-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                              title={permissions.canDeleteDdt ? 'Elimina' : 'Ruolo non autorizzato'}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1259,8 +1361,9 @@ export default function App() {
                           </button>
                           <button 
                             onClick={() => deletePallet(entry.id)}
-                            className="p-2 hover:bg-red-50 rounded-xl text-red-600 transition-colors"
-                            title="Elimina"
+                            disabled={!permissions.canDeletePallet}
+                            className="p-2 hover:bg-red-50 rounded-xl text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={permissions.canDeletePallet ? 'Elimina' : 'Ruolo non autorizzato'}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1408,6 +1511,69 @@ export default function App() {
                   </div>
                 </section>
               </div>
+
+              <section className="bg-white p-8 rounded-[2rem] shadow-sm border border-black/5 space-y-6">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-bold text-lg">Sicurezza, Utenti e Audit</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Utente Corrente</label>
+                      <input
+                        type="text"
+                        value={currentUser.fullName}
+                        onChange={(e) => {
+                          const nextUser = { ...currentUser, fullName: e.target.value };
+                          setCurrentUser(nextUser);
+                          logAuditEvent({ action: 'USER_UPDATED', entityType: 'SECURITY', entityId: nextUser.id, summary: `Aggiornato nome utente corrente (${nextUser.fullName})` });
+                        }}
+                        className="w-full bg-[#f9f9f9] border border-black/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-semibold text-slate-500 mb-1 block">Ruolo Corrente</label>
+                      <select
+                        value={currentUser.role}
+                        onChange={(e) => {
+                          const role = e.target.value as UserRole;
+                          setCurrentUser({ ...currentUser, role });
+                          logAuditEvent({ action: 'ROLE_SWITCHED', entityType: 'SECURITY', entityId: currentUser.id, summary: `Cambio ruolo a ${ROLE_LABELS[role]}` });
+                        }}
+                        className="w-full bg-[#f9f9f9] border border-black/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {(Object.keys(ROLE_LABELS) as UserRole[]).map(role => (
+                          <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                      <p><strong>Permessi attivi:</strong></p>
+                      <p>• Emissione DDT: {permissions.canIssueDdt ? 'Sì' : 'No'}</p>
+                      <p>• Modifica anagrafiche: {permissions.canEditMasterData ? 'Sì' : 'No'}</p>
+                      <p>• Eliminazione pedane: {permissions.canDeletePallet ? 'Sì' : 'No'}</p>
+                      <p>• Eliminazione DDT: {permissions.canDeleteDdt ? 'Sì' : 'No'}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] uppercase font-semibold text-slate-500 mb-2 block">Audit Trail (ultimi eventi)</p>
+                    <div className="max-h-64 overflow-auto space-y-2 pr-1">
+                      {auditLog.slice(0, 20).map(event => (
+                        <div key={event.id} className="rounded-xl border border-black/10 p-3 text-xs bg-white">
+                          <p className="font-semibold text-slate-700">{event.action} · {event.entityType}</p>
+                          <p className="text-slate-500">{new Date(event.timestamp).toLocaleString()} · {event.userName} ({ROLE_LABELS[event.userRole]})</p>
+                          <p className="text-slate-700 mt-1">{event.summary}</p>
+                        </div>
+                      ))}
+                      {auditLog.length === 0 && <p className="text-sm text-slate-400 italic">Nessun evento registrato.</p>}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
 
               <div className="bg-[#1a1a1a] text-white p-8 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
