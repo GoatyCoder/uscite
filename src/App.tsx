@@ -135,6 +135,11 @@ const formatHarvestDateGS1 = (dateStr: string): string => {
 export default function App() {
   // View State
   const [view, setView] = useState<ViewMode>('DASHBOARD');
+  const [notification, setNotification] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+
+  const showNotification = (message: string, type: 'error' | 'success' = 'error') => {
+    setNotification({ type, message });
+  };
 
   // Master Data State (Persisted)
   const [articles, setArticles] = useState<MasterArticle[]>(() => {
@@ -203,6 +208,12 @@ export default function App() {
     const saved = localStorage.getItem('gs1_audit_log');
     return saved ? JSON.parse(saved) : [];
   });
+
+  useEffect(() => {
+    if (!notification) return;
+    const timeout = window.setTimeout(() => setNotification(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [notification]);
 
   // Sessione Pallet Corrente - REMOVED (Managed in PalletCompositionPage)
   // const [lines, setLines] = useState<PalletLine[]>([...]);
@@ -312,7 +323,7 @@ export default function App() {
         id: crypto.randomUUID(),
         sscc,
         recipientCode,
-        date: new Date().toLocaleString(),
+        date: new Date().toISOString(),
         lines: [...lines],
         totalNetWeight: totals.net,
         totalGrossWeight: totals.gross,
@@ -330,12 +341,12 @@ export default function App() {
 
   const deletePallet = (id: string) => {
     if (!permissions.canDeletePallet) {
-      alert('Il ruolo corrente non può eliminare pedane.');
+      showNotification('Il ruolo corrente non può eliminare pedane.');
       return;
     }
     const pallet = history.find(p => p.id === id);
     if (pallet?.ddtId) {
-      alert('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
+      showNotification('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
       return;
     }
     if (confirm('Sei sicuro di voler eliminare questa pedana dallo storico?')) {
@@ -351,7 +362,7 @@ export default function App() {
 
   const deleteDdt = (id: string) => {
     if (!permissions.canDeleteDdt) {
-      alert('Il ruolo corrente non può eliminare DDT emessi.');
+      showNotification('Il ruolo corrente non può eliminare DDT emessi.');
       return;
     }
     if (confirm('Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.')) {
@@ -386,11 +397,11 @@ export default function App() {
 
   const createDDT = () => {
     if (!permissions.canIssueDdt) {
-      alert('Il ruolo corrente non può emettere DDT.');
+      showNotification('Il ruolo corrente non può emettere DDT.');
       return;
     }
     if (!selectedRecipientCode || !currentDdtNumber || selectedPalletIds.length === 0) {
-      alert('Compila tutti i campi e seleziona almeno una pedana');
+      showNotification('Compila tutti i campi e seleziona almeno una pedana');
       return;
     }
 
@@ -446,7 +457,7 @@ export default function App() {
     // Reset sessione DDT
     setCurrentDdtNumber('');
     setSelectedPalletIds([]);
-    alert(`DDT ${currentDdtNumber} ${editingDdt ? 'aggiornato' : 'creato'} con successo!`);
+    showNotification(`DDT ${currentDdtNumber} ${editingDdt ? 'aggiornato' : 'creato'} con successo!`, 'success');
     
     generateDdtPDF(newDdt);
   };
@@ -667,6 +678,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans">
+      {notification && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={cn(
+              'px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold',
+              notification.type === 'error'
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            )}
+            role="status"
+            aria-live="polite"
+          >
+            {notification.message}
+          </div>
+        </div>
+      )}
       {/* Sidebar Navigation */}
       <div className="flex flex-col md:flex-row min-h-screen">
         <Sidebar currentView={view} onViewChange={setView} />
@@ -1294,7 +1321,7 @@ export default function App() {
                             <button 
                               onClick={() => deleteDdt(ddt.id)}
                               disabled={!permissions.canDeleteDdt}
-                              className="p-2 hover:bg-white rounded-xl text-red-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="p-2 rounded-xl text-red-600 transition-colors shadow-sm enabled:hover:bg-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:opacity-100 disabled:cursor-not-allowed"
                               title={permissions.canDeleteDdt ? 'Elimina' : 'Ruolo non autorizzato'}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1362,7 +1389,7 @@ export default function App() {
                           <button 
                             onClick={() => deletePallet(entry.id)}
                             disabled={!permissions.canDeletePallet}
-                            className="p-2 hover:bg-red-50 rounded-xl text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl text-red-600 transition-colors enabled:hover:bg-red-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:opacity-100 disabled:cursor-not-allowed"
                             title={permissions.canDeletePallet ? 'Elimina' : 'Ruolo non autorizzato'}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1564,7 +1591,9 @@ export default function App() {
                       {auditLog.slice(0, 20).map(event => (
                         <div key={event.id} className="rounded-xl border border-black/10 p-3 text-xs bg-white">
                           <p className="font-semibold text-slate-700">{event.action} · {event.entityType}</p>
-                          <p className="text-slate-500">{new Date(event.timestamp).toLocaleString()} · {event.userName} ({ROLE_LABELS[event.userRole]})</p>
+                          <p className="text-slate-500">
+                            <time dateTime={event.timestamp}>{event.timestamp}</time> · {event.userName} ({ROLE_LABELS[event.userRole]})
+                          </p>
                           <p className="text-slate-700 mt-1">{event.summary}</p>
                         </div>
                       ))}

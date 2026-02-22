@@ -261,13 +261,31 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
 
   const normalizeGtin = (gtin?: string): string => (gtin || '').replace(/\D/g, '').padStart(14, '0').slice(-14);
 
+  const sanitizeBatchForAi10 = (batch: string): string => {
+    const stripped = batch.replace(/[()]/g, '').trim();
+    const alphanumeric = stripped.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return alphanumeric.slice(0, 20);
+  };
+
+  const sanitizeHarvestForAi7007 = (harvestDate: string): string => {
+    const stripped = harvestDate.replace(/[()]/g, '');
+    return stripped.replace(/\D/g, '').slice(0, 8);
+  };
+
   const buildGs1Payload = () => {
     const uniqueArticleCodes = Array.from(new Set(lines.map(line => line.articleCode).filter(Boolean))) as string[];
-    const uniqueBatches = Array.from(new Set(lines.map(line => line.batch.trim()).filter(Boolean))) as string[];
-    const uniqueHarvestDates = Array.from(new Set(lines.map(line => line.harvestDate).filter(Boolean))) as string[];
+    const uniqueBatches = Array.from(new Set(lines
+      .map(line => sanitizeBatchForAi10(line.batch))
+      .filter(Boolean))) as string[];
+    const uniqueHarvestDates = Array.from(new Set(lines
+      .map(line => sanitizeHarvestForAi7007(line.harvestDate))
+      .filter(Boolean))) as string[];
 
     const firstArticle = articles.find(a => a.code === uniqueArticleCodes[0]);
-    const totalColli = lines.reduce((acc, line) => acc + parseInt(line.count || '0', 10), 0);
+    const totalColli = lines.reduce((acc, line) => {
+      const parsedCount = parseInt(line.count || '0', 10);
+      return acc + (Number.isFinite(parsedCount) ? parsedCount : 0);
+    }, 0);
 
     let gs1HumanReadable = `(00)${currentSSCC}`;
     let gs1BarcodeText = `(00)${currentSSCC}`;
@@ -295,7 +313,7 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
     }
 
     if (uniqueHarvestDates.length === 1) {
-      const harvest = uniqueHarvestDates[0].replace(/-/g, '');
+      const harvest = uniqueHarvestDates[0];
       if (harvest.length === 8) {
         gs1HumanReadable += `(7007)${harvest}`;
         gs1BarcodeText += `(7007)${harvest}`;
@@ -312,9 +330,10 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
   const generatePDF = async () => {
     const recipient = recipients.find(r => r.code === selectedRecipientCode);
     if (!recipient) {
-      alert('Seleziona un cliente valido');
+      setWarning('Seleziona un cliente valido prima di generare il PDF.');
       return;
     }
+    setWarning(null);
 
     const doc = new jsPDF({
       orientation: 'portrait',
