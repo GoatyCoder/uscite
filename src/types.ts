@@ -14,11 +14,9 @@ export interface MasterPackaging {
   id: string;
   name: string;
   tare: string;
-  isPooling: boolean;
   width?: string; // Larghezza in mm
   depth?: string; // Profondità in mm
   height?: string; // Altezza in mm
-  material?: string; // Es. Plastica, Legno, Cartone
 }
 
 export interface MasterPallet {

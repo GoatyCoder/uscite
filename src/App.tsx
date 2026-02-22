@@ -171,20 +171,20 @@ export default function App() {
   const [packagings, setPackagings] = useState<MasterPackaging[]>(() => {
     const saved = localStorage.getItem('gs1_packagings');
     return saved ? JSON.parse(saved) : [
-      { id: 'PACK01', name: 'Cartone 40x60', tare: '0.6', isPooling: false },
-      { id: 'PACK02', name: 'Cassa Legno', tare: '1.5', isPooling: false },
-      { id: 'PACK03', name: 'CPR 40x60', tare: '1.2', isPooling: true },
-      { id: 'PACK04', name: 'IFCO 40x60', tare: '1.1', isPooling: true }
+      { id: 'PACK01', name: 'CPR REDEA 60x40 H17', tare: '1.50', width: '600', depth: '400', height: '170' },
+      { id: 'PACK02', name: 'IFCO DS 1003 BLACK LL', tare: '0.95', width: '400', depth: '300', height: '120' },
+      { id: 'PACK03', name: 'Cartone 60x40 H16', tare: '0.60', width: '600', depth: '400', height: '160' },
+      { id: 'PACK04', name: 'Cassetta legno 50x30 H14', tare: '1.30', width: '500', depth: '300', height: '140' }
     ];
   });
 
   const [palletMasters, setPalletMasters] = useState<MasterPallet[]>(() => {
     const saved = localStorage.getItem('gs1_pallets');
     return saved ? JSON.parse(saved) : [
-      { id: 'PAL01', name: 'EPAL (80x120)', tare: '25', isPooling: true },
-      { id: 'PAL02', name: 'Philips (100x120)', tare: '30', isPooling: true },
-      { id: 'PAL03', name: 'Mezza Pedana (60x80)', tare: '12', isPooling: false },
-      { id: 'PAL04', name: 'Plastica (80x120)', tare: '15', isPooling: false }
+      { id: 'PAL01', name: 'EPAL EUR 1 (1200x800)', tare: '25', isPooling: true, width: '1200', depth: '800', height: '144', maxLoad: '1500', material: 'Legno' },
+      { id: 'PAL02', name: 'CPR PR12 Plastica Riciclata (1200x800)', tare: '18', isPooling: true, width: '1200', depth: '800', height: '150', maxLoad: '1500', material: 'Plastica riciclata' },
+      { id: 'PAL03', name: 'CPR Pallet Legno (1200x800)', tare: '23', isPooling: true, width: '1200', depth: '800', height: '144', maxLoad: '1500', material: 'Legno' },
+      { id: 'PAL04', name: 'Mezza pedana (800x600)', tare: '12', isPooling: false, width: '800', depth: '600', height: '130', maxLoad: '750', material: 'Legno' }
     ];
   });
 

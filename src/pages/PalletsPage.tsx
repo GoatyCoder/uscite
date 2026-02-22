@@ -64,8 +64,13 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
   const columns: Column<MasterPallet>[] = [
     { header: 'Nome', accessor: 'name', className: 'font-medium' },
     { header: 'Tara (kg)', accessor: 'tare' },
-    { 
-      header: 'Tipo', 
+    { header: 'Portata Max (kg)', accessor: (item) => item.maxLoad || '-' },
+    {
+      header: 'Dimensioni (mm)',
+      accessor: (item) => `${item.width || '-'} × ${item.depth || '-'} × ${item.height || '-'}`,
+    },
+    {
+      header: 'Tipo',
       accessor: (item) => item.isPooling ? (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
           Pooling (EPAL/CHEP)
