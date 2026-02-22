@@ -50,6 +50,7 @@ import { PalletsPage } from './pages/PalletsPage';
 import { PalletCompositionPage } from './pages/PalletCompositionPage';
 import { RecipientsPage } from './pages/RecipientsPage';
 import { Button } from './components/ui/Button';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 /**
  * Utility per gestire le classi Tailwind
@@ -135,6 +136,28 @@ const formatHarvestDateGS1 = (dateStr: string): string => {
 export default function App() {
   // View State
   const [view, setView] = useState<ViewMode>('DASHBOARD');
+  const [notification, setNotification] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  } | null>(null);
+
+  const showNotification = (message: string, type: 'error' | 'success' = 'error') => {
+    setNotification({ type, message });
+  };
+
+  const askConfirmation = (config: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }) => {
+    setConfirmDialog(config);
+  };
 
   // Master Data State (Persisted)
   const [articles, setArticles] = useState<MasterArticle[]>(() => {
@@ -203,6 +226,12 @@ export default function App() {
     const saved = localStorage.getItem('gs1_audit_log');
     return saved ? JSON.parse(saved) : [];
   });
+
+  useEffect(() => {
+    if (!notification) return;
+    const timeout = window.setTimeout(() => setNotification(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [notification]);
 
   // Sessione Pallet Corrente - REMOVED (Managed in PalletCompositionPage)
   // const [lines, setLines] = useState<PalletLine[]>([...]);
@@ -312,7 +341,7 @@ export default function App() {
         id: crypto.randomUUID(),
         sscc,
         recipientCode,
-        date: new Date().toLocaleString(),
+        date: new Date().toISOString(),
         lines: [...lines],
         totalNetWeight: totals.net,
         totalGrossWeight: totals.gross,
@@ -330,41 +359,98 @@ export default function App() {
 
   const deletePallet = (id: string) => {
     if (!permissions.canDeletePallet) {
-      alert('Il ruolo corrente non può eliminare pedane.');
+      showNotification('Il ruolo corrente non può eliminare pedane.');
       return;
     }
     const pallet = history.find(p => p.id === id);
     if (pallet?.ddtId) {
-      alert('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
+      showNotification('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
       return;
     }
-    if (confirm('Sei sicuro di voler eliminare questa pedana dallo storico?')) {
-      setHistory(history.filter(p => p.id !== id));
-      logAuditEvent({
-        action: 'PALLET_DELETED',
-        entityType: 'PALLET',
-        entityId: id,
-        summary: `Pedana ${pallet?.sscc || id} eliminata dallo storico`,
-      });
-    }
+    askConfirmation({
+      title: 'Conferma eliminazione pedana',
+      message: 'Sei sicuro di voler eliminare questa pedana dallo storico?',
+      confirmLabel: 'Elimina pedana',
+      variant: 'danger',
+      onConfirm: () => {
+        setHistory(history.filter(p => p.id !== id));
+        logAuditEvent({
+          action: 'PALLET_DELETED',
+          entityType: 'PALLET',
+          entityId: id,
+          summary: `Pedana ${pallet?.sscc || id} eliminata dallo storico`,
+        });
+        showNotification('Pedana eliminata con successo.', 'success');
+      }
+    });
   };
 
   const deleteDdt = (id: string) => {
     if (!permissions.canDeleteDdt) {
-      alert('Il ruolo corrente non può eliminare DDT emessi.');
+      showNotification('Il ruolo corrente non può eliminare DDT emessi.');
       return;
     }
-    if (confirm('Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.')) {
-      const targetDdt = ddts.find(d => d.id === id);
-      setDdts(ddts.filter(d => d.id !== id));
-      setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
-      logAuditEvent({
-        action: 'DDT_DELETED',
-        entityType: 'DDT',
-        entityId: id,
-        summary: `DDT ${targetDdt?.number || id} eliminato`,
-      });
-    }
+    askConfirmation({
+      title: 'Conferma eliminazione DDT',
+      message: 'Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.',
+      confirmLabel: 'Elimina DDT',
+      variant: 'danger',
+      onConfirm: () => {
+        const targetDdt = ddts.find(d => d.id === id);
+        setDdts(ddts.filter(d => d.id !== id));
+        setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
+        logAuditEvent({
+          action: 'DDT_DELETED',
+          entityType: 'DDT',
+          entityId: id,
+          summary: `DDT ${targetDdt?.number || id} eliminato`,
+        });
+        showNotification('DDT eliminato con successo.', 'success');
+      }
+    });
+  };
+
+  const exportDataAsJson = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      companyPrefix,
+      serialNumber,
+      senderName,
+      senderAddress,
+      senderVat,
+      senderPhone,
+      senderEmail,
+      currentUser,
+      articles,
+      packagings,
+      palletMasters,
+      recipients,
+      history,
+      ddts,
+      auditLog,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_gs1_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Backup JSON esportato con successo.', 'success');
+  };
+
+  const resetAllData = () => {
+    askConfirmation({
+      title: 'Conferma reset totale',
+      message: 'Questa operazione cancellerà anagrafiche, storico, DDT e audit log locali. Vuoi continuare?',
+      confirmLabel: 'Resetta tutto',
+      variant: 'danger',
+      onConfirm: () => {
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
   };
 
   const startEditDdt = (ddt: MasterDDT) => {
@@ -386,11 +472,11 @@ export default function App() {
 
   const createDDT = () => {
     if (!permissions.canIssueDdt) {
-      alert('Il ruolo corrente non può emettere DDT.');
+      showNotification('Il ruolo corrente non può emettere DDT.');
       return;
     }
     if (!selectedRecipientCode || !currentDdtNumber || selectedPalletIds.length === 0) {
-      alert('Compila tutti i campi e seleziona almeno una pedana');
+      showNotification('Compila tutti i campi e seleziona almeno una pedana');
       return;
     }
 
@@ -446,7 +532,7 @@ export default function App() {
     // Reset sessione DDT
     setCurrentDdtNumber('');
     setSelectedPalletIds([]);
-    alert(`DDT ${currentDdtNumber} ${editingDdt ? 'aggiornato' : 'creato'} con successo!`);
+    showNotification(`DDT ${currentDdtNumber} ${editingDdt ? 'aggiornato' : 'creato'} con successo!`, 'success');
     
     generateDdtPDF(newDdt);
   };
@@ -667,6 +753,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans">
+      {notification && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className={cn(
+              'px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold',
+              notification.type === 'error'
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            )}
+            role="status"
+            aria-live="polite"
+          >
+            {notification.message}
+          </div>
+        </div>
+      )}
       {/* Sidebar Navigation */}
       <div className="flex flex-col md:flex-row min-h-screen">
         <Sidebar currentView={view} onViewChange={setView} />
@@ -1294,7 +1396,7 @@ export default function App() {
                             <button 
                               onClick={() => deleteDdt(ddt.id)}
                               disabled={!permissions.canDeleteDdt}
-                              className="p-2 hover:bg-white rounded-xl text-red-600 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="p-2 rounded-xl text-red-600 transition-colors shadow-sm enabled:hover:bg-white disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:opacity-100 disabled:cursor-not-allowed"
                               title={permissions.canDeleteDdt ? 'Elimina' : 'Ruolo non autorizzato'}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1326,7 +1428,21 @@ export default function App() {
                       className="w-full bg-white border border-black/10 rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                  <button onClick={() => setHistory([])} className="text-red-500 text-xs font-bold hover:underline whitespace-nowrap">Svuota Archivio</button>
+                  <button
+                    onClick={() => askConfirmation({
+                      title: 'Conferma svuotamento archivio',
+                      message: 'Vuoi davvero svuotare tutto lo storico pedane?',
+                      confirmLabel: 'Svuota archivio',
+                      variant: 'danger',
+                      onConfirm: () => {
+                        setHistory([]);
+                        showNotification('Archivio pedane svuotato.', 'success');
+                      }
+                    })}
+                    className="text-red-500 text-xs font-bold hover:underline whitespace-nowrap"
+                  >
+                    Svuota Archivio
+                  </button>
                 </div>
               </header>
               
@@ -1362,7 +1478,7 @@ export default function App() {
                           <button 
                             onClick={() => deletePallet(entry.id)}
                             disabled={!permissions.canDeletePallet}
-                            className="p-2 hover:bg-red-50 rounded-xl text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-2 rounded-xl text-red-600 transition-colors enabled:hover:bg-red-50 disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:opacity-100 disabled:cursor-not-allowed"
                             title={permissions.canDeletePallet ? 'Elimina' : 'Ruolo non autorizzato'}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1564,7 +1680,9 @@ export default function App() {
                       {auditLog.slice(0, 20).map(event => (
                         <div key={event.id} className="rounded-xl border border-black/10 p-3 text-xs bg-white">
                           <p className="font-semibold text-slate-700">{event.action} · {event.entityType}</p>
-                          <p className="text-slate-500">{new Date(event.timestamp).toLocaleString()} · {event.userName} ({ROLE_LABELS[event.userRole]})</p>
+                          <p className="text-slate-500">
+                            <time dateTime={event.timestamp}>{event.timestamp}</time> · {event.userName} ({ROLE_LABELS[event.userRole]})
+                          </p>
                           <p className="text-slate-700 mt-1">{event.summary}</p>
                         </div>
                       ))}
@@ -1581,10 +1699,10 @@ export default function App() {
                   <p className="text-sm text-white/40">Esporta i dati locali per sicurezza o migrazione</p>
                 </div>
                 <div className="flex gap-3">
-                  <button className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                  <button onClick={exportDataAsJson} className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Esporta JSON
                   </button>
-                  <button className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                  <button onClick={resetAllData} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Reset Totale
                   </button>
                 </div>
@@ -1593,6 +1711,21 @@ export default function App() {
           )}
         </main>
       </div>
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        title={confirmDialog?.title || ''}
+        message={confirmDialog?.message || ''}
+        confirmLabel={confirmDialog?.confirmLabel}
+        variant={confirmDialog?.variant || 'default'}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          if (confirmDialog) {
+            const action = confirmDialog.onConfirm;
+            setConfirmDialog(null);
+            action();
+          }
+        }}
+      />
     </div>
   );
 }

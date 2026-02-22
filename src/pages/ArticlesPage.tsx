@@ -4,6 +4,7 @@ import { MasterDataLayout } from '../components/master-data/MasterDataLayout';
 import { MasterDataTable, Column } from '../components/master-data/MasterDataTable';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { X } from 'lucide-react';
 
 interface ArticlesPageProps {
@@ -21,6 +22,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<MasterArticle | null>(null);
+  const [articleToDelete, setArticleToDelete] = useState<MasterArticle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAdd = () => {
@@ -34,9 +36,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
   };
 
   const handleDelete = (article: MasterArticle) => {
-    if (confirm(`Sei sicuro di voler eliminare l'articolo ${article.description}?`)) {
-      onDelete(article);
-    }
+    setArticleToDelete(article);
   };
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
@@ -170,6 +170,21 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!articleToDelete}
+        title="Conferma eliminazione articolo"
+        message={`Vuoi davvero eliminare l'articolo ${articleToDelete?.description || ''}? Questa operazione non è reversibile.`}
+        confirmLabel="Elimina articolo"
+        variant="danger"
+        onCancel={() => setArticleToDelete(null)}
+        onConfirm={() => {
+          if (articleToDelete) {
+            onDelete(articleToDelete);
+            setArticleToDelete(null);
+          }
+        }}
+      />
     </MasterDataLayout>
   );
 };

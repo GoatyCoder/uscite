@@ -4,6 +4,7 @@ import { MasterDataLayout } from '../components/master-data/MasterDataLayout';
 import { MasterDataTable, Column } from '../components/master-data/MasterDataTable';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { X } from 'lucide-react';
 
 interface PalletsPageProps {
@@ -19,6 +20,7 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPallet, setEditingPallet] = useState<MasterPallet | null>(null);
+  const [palletToDelete, setPalletToDelete] = useState<MasterPallet | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAdd = () => {
@@ -32,9 +34,7 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
   };
 
   const handleDelete = (pallet: MasterPallet) => {
-    if (confirm(`Sei sicuro di voler eliminare il pallet ${pallet.name}?`)) {
-      onDelete(pallet);
-    }
+    setPalletToDelete(pallet);
   };
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
@@ -157,6 +157,21 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!palletToDelete}
+        title="Conferma eliminazione pallet"
+        message={`Vuoi davvero eliminare il pallet ${palletToDelete?.name || ''}? Questa operazione non è reversibile.`}
+        confirmLabel="Elimina pallet"
+        variant="danger"
+        onCancel={() => setPalletToDelete(null)}
+        onConfirm={() => {
+          if (palletToDelete) {
+            onDelete(palletToDelete);
+            setPalletToDelete(null);
+          }
+        }}
+      />
     </MasterDataLayout>
   );
 };
