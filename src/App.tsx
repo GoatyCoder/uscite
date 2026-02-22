@@ -309,10 +309,6 @@ export default function App() {
 
 
   const handleResetToDemo = () => {
-    if (!confirm('Confermi il reset totale? Verranno cancellati i dati locali e ripristinati i dati demo.')) {
-      return;
-    }
-
     const keysToClear = [
       'gs1_prefix',
       'gs1_serial',
@@ -331,38 +327,21 @@ export default function App() {
 
     keysToClear.forEach((key) => localStorage.removeItem(key));
 
-    setArticles(DEMO_ARTICLES);
-    setPackagings(DEMO_PACKAGINGS);
-    setPalletMasters(DEMO_PALLETS);
-    setRecipients(DEMO_RECIPIENTS);
-    setHistory([]);
-    setDdts([]);
-    setCompanyPrefix(DEFAULT_COMPANY_PREFIX);
-    setSerialNumber(DEFAULT_SERIAL_NUMBER);
-    setSenderName(DEFAULT_SENDER_NAME);
-    setSenderAddress(DEFAULT_SENDER_ADDRESS);
-    setSenderVat(DEFAULT_SENDER_VAT);
-    setSenderPhone(DEFAULT_SENDER_PHONE);
-    setSenderEmail(DEFAULT_SENDER_EMAIL);
+    localStorage.setItem('gs1_prefix', DEFAULT_COMPANY_PREFIX);
+    localStorage.setItem('gs1_serial', String(DEFAULT_SERIAL_NUMBER));
+    localStorage.setItem('gs1_articles', JSON.stringify(DEMO_ARTICLES));
+    localStorage.setItem('gs1_packagings', JSON.stringify(DEMO_PACKAGINGS));
+    localStorage.setItem('gs1_pallets', JSON.stringify(DEMO_PALLETS));
+    localStorage.setItem('gs1_recipients', JSON.stringify(DEMO_RECIPIENTS));
+    localStorage.setItem('gs1_history', JSON.stringify([]));
+    localStorage.setItem('gs1_ddts', JSON.stringify([]));
+    localStorage.setItem('gs1_sender_name', DEFAULT_SENDER_NAME);
+    localStorage.setItem('gs1_sender_address', DEFAULT_SENDER_ADDRESS);
+    localStorage.setItem('gs1_sender_vat', DEFAULT_SENDER_VAT);
+    localStorage.setItem('gs1_sender_phone', DEFAULT_SENDER_PHONE);
+    localStorage.setItem('gs1_sender_email', DEFAULT_SENDER_EMAIL);
 
-    setSelectedRecipientCode('');
-    setCurrentDdtNumber('');
-    setCurrentDdtDate(new Date().toISOString().split('T')[0]);
-    setCarrierName('Vettore Proprio');
-    setCarrierAddress('');
-    setTransportReason('Vendita');
-    setGoodsAppearance('Colli su Pedane');
-    setPort('Franco');
-    setLicensePlate('');
-    setTrailerPlate('');
-    setTransportStartDateTime(new Date().toISOString().slice(0, 16));
-    setSelectedPalletIds([]);
-    setEditingPallet(null);
-    setEditingDdt(null);
-    setSearchQuery('');
-    setView('DASHBOARD');
-
-    alert('Reset completato: ripristinati i dati demo.');
+    window.location.reload();
   };
 
   const startEditDdt = (ddt: MasterDDT) => {
