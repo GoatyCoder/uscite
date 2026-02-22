@@ -13,6 +13,11 @@ interface PackagingsPageProps {
   onDelete: (packaging: MasterPackaging) => void;
 }
 
+const parseOptionalNumber = (value: FormDataEntryValue | null): number | undefined => {
+  const parsed = parseFloat((value as string) || '');
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 export const PackagingsPage: React.FC<PackagingsPageProps> = ({
   packagings,
   onSave,
@@ -40,40 +45,30 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const newPackaging: MasterPackaging = {
       id: editingPackaging?.id || crypto.randomUUID(),
       name: formData.get('name') as string,
-      tare: formData.get('tare') as string,
-      isPooling: formData.get('isPooling') === 'on',
-      width: formData.get('width') as string,
-      depth: formData.get('depth') as string,
-      height: formData.get('height') as string,
-      material: formData.get('material') as string,
+      tare: parseFloat(formData.get('tare') as string),
+      width: parseOptionalNumber(formData.get('width')),
+      depth: parseOptionalNumber(formData.get('depth')),
+      height: parseOptionalNumber(formData.get('height')),
     };
 
     onSave(newPackaging);
     setIsModalOpen(false);
   };
 
-  const filteredPackagings = packagings.filter(pkg => 
+  const filteredPackagings = packagings.filter(pkg =>
     pkg.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const columns: Column<MasterPackaging>[] = [
     { header: 'Nome', accessor: 'name', className: 'font-medium' },
     { header: 'Tara (kg)', accessor: 'tare' },
-    { 
-      header: 'Tipo', 
-      accessor: (item) => item.isPooling ? (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          Pooling (CPR/IFCO)
-        </span>
-      ) : (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          A Perdere
-        </span>
-      )
+    {
+      header: 'Dimensioni (mm)',
+      accessor: (item) => `${item.width || '-'} × ${item.depth || '-'} × ${item.height || '-'}`,
     },
   ];
 
@@ -103,23 +98,17 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Nome Imballaggio</label>
-                  <Input name="name" defaultValue={editingPackaging?.name} required placeholder="Es. Cartone 40x60" />
+                  <Input name="name" defaultValue={editingPackaging?.name} required placeholder="Es. Cassa 40x60" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tara (kg)</label>
-                    <Input name="tare" type="number" step="0.01" defaultValue={editingPackaging?.tare} required placeholder="0.00" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Materiale</label>
-                    <Input name="material" defaultValue={editingPackaging?.material} placeholder="Es. Cartone" />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tara (kg)</label>
+                  <Input name="tare" type="number" step="0.01" defaultValue={editingPackaging?.tare} required placeholder="0.00" />
                 </div>
 
                 <div className="space-y-2">
@@ -129,17 +118,6 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
                     <Input name="depth" type="number" defaultValue={editingPackaging?.depth} placeholder="Prof." />
                     <Input name="height" type="number" defaultValue={editingPackaging?.height} placeholder="Alt." />
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <input 
-                    type="checkbox" 
-                    name="isPooling" 
-                    id="isPooling" 
-                    defaultChecked={editingPackaging?.isPooling}
-                    className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <label htmlFor="isPooling" className="text-sm font-medium text-gray-700">Imballaggio a rendere (Pooling)</label>
                 </div>
               </div>
 

@@ -119,7 +119,7 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
         _id: crypto.randomUUID(),
         masterId: palletMaster.id,
         name: palletMaster.name,
-        tare: palletMaster.tare
+        tare: String(palletMaster.tare)
       }];
 
       // Recalculate
@@ -194,7 +194,7 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       // Auto-fill packaging tare
       if (field === 'packagingId') {
         const pkg = packagings.find(p => p.id === value);
-        updatedLine.packagingTare = pkg ? pkg.tare : '0';
+        updatedLine.packagingTare = pkg ? String(pkg.tare) : '0';
       }
 
       // Auto-fill article defaults
@@ -205,8 +205,8 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
             updatedLine.packagingId = art.defaultPackagingId;
             const pkg = packagings.find(p => p.id === art.defaultPackagingId);
             if (pkg) {
-              updatedLine.packagingTare = pkg.tare;
-              if (!pkg.tare || pkg.tare === '0') {
+              updatedLine.packagingTare = String(pkg.tare);
+              if (!pkg.tare || pkg.tare === 0) {
                 setWarning(`Attenzione: L'imballaggio di default per ${art.description} ha una tara mancante o uguale a zero.`);
               }
             } else {
