@@ -13,20 +13,20 @@ export interface MasterArticle {
 export interface MasterPackaging {
   id: string;
   name: string;
-  tare: string;
-  width?: string; // Larghezza in mm
-  depth?: string; // Profondità in mm
-  height?: string; // Altezza in mm
+  tare: number;
+  width?: number; // Larghezza in mm
+  depth?: number; // Profondità in mm
+  height?: number; // Altezza in mm
 }
 
 export interface MasterPallet {
   id: string;
   name: string;
-  tare: string;
-  width?: string; // Larghezza in mm
-  depth?: string; // Profondità in mm
-  height?: string; // Altezza in mm
-  maxLoad?: string; // Portata massima in kg
+  tare: number;
+  width?: number; // Larghezza in mm
+  depth?: number; // Profondità in mm
+  height?: number; // Altezza in mm
+  maxLoad?: number; // Portata massima in kg
 }
 
 export interface MasterRecipient {

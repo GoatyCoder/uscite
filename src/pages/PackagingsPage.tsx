@@ -13,6 +13,11 @@ interface PackagingsPageProps {
   onDelete: (packaging: MasterPackaging) => void;
 }
 
+const parseOptionalNumber = (value: FormDataEntryValue | null): number | undefined => {
+  const parsed = parseFloat((value as string) || '');
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 export const PackagingsPage: React.FC<PackagingsPageProps> = ({
   packagings,
   onSave,
@@ -44,10 +49,10 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
     const newPackaging: MasterPackaging = {
       id: editingPackaging?.id || crypto.randomUUID(),
       name: formData.get('name') as string,
-      tare: formData.get('tare') as string,
-      width: formData.get('width') as string,
-      depth: formData.get('depth') as string,
-      height: formData.get('height') as string,
+      tare: parseFloat(formData.get('tare') as string),
+      width: parseOptionalNumber(formData.get('width')),
+      depth: parseOptionalNumber(formData.get('depth')),
+      height: parseOptionalNumber(formData.get('height')),
     };
 
     onSave(newPackaging);

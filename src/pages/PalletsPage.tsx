@@ -13,6 +13,11 @@ interface PalletsPageProps {
   onDelete: (pallet: MasterPallet) => void;
 }
 
+const parseOptionalNumber = (value: FormDataEntryValue | null): number | undefined => {
+  const parsed = parseFloat((value as string) || '');
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 export const PalletsPage: React.FC<PalletsPageProps> = ({
   pallets,
   onSave,
@@ -40,22 +45,22 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const newPallet: MasterPallet = {
       id: editingPallet?.id || crypto.randomUUID(),
       name: formData.get('name') as string,
-      tare: formData.get('tare') as string,
-      width: formData.get('width') as string,
-      depth: formData.get('depth') as string,
-      height: formData.get('height') as string,
-      maxLoad: formData.get('maxLoad') as string,
+      tare: parseFloat(formData.get('tare') as string),
+      width: parseOptionalNumber(formData.get('width')),
+      depth: parseOptionalNumber(formData.get('depth')),
+      height: parseOptionalNumber(formData.get('height')),
+      maxLoad: parseOptionalNumber(formData.get('maxLoad')),
     };
 
     onSave(newPallet);
     setIsModalOpen(false);
   };
 
-  const filteredPallets = pallets.filter(pallet => 
+  const filteredPallets = pallets.filter(pallet =>
     pallet.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -95,7 +100,7 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
