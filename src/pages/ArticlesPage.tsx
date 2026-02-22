@@ -43,14 +43,31 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    const saleType = formData.get('saleType') as MasterArticle['saleType'];
+    const unitsPerCase = (formData.get('unitsPerCase') as string) || '1';
+    const netWeightPerUnitKg = (formData.get('netWeightPerUnitKg') as string) || '0';
+    const netWeightPerCaseKgInput = (formData.get('netWeightPerCaseKg') as string) || '0';
+
+    const inferredWeightType = saleType === 'KG_VARIABLE' ? 'VARIABLE' : 'FIXED';
+    const inferredUm = saleType === 'PZ' ? 'PZ' : 'KG';
+    const parsedUnitsPerCase = Math.max(1, parseFloat(unitsPerCase.replace(',', '.')) || 1);
+    const parsedNetWeightUnit = Math.max(0, parseFloat(netWeightPerUnitKg.replace(',', '.')) || 0);
+    const computedCaseWeight = parsedUnitsPerCase * parsedNetWeightUnit;
+    const parsedCaseWeightInput = Math.max(0, parseFloat(netWeightPerCaseKgInput.replace(',', '.')) || 0);
+    const netWeightPerCaseKg = parsedCaseWeightInput > 0 ? parsedCaseWeightInput : computedCaseWeight;
+
     const newArticle: MasterArticle = {
       code: formData.get('code') as string,
       description: formData.get('description') as string,
       gtin: formData.get('gtin') as string,
       origin: formData.get('origin') as string,
-      um: formData.get('um') as 'KG' | 'PZ',
-      unitWeight: formData.get('unitWeight') as string,
-      weightType: formData.get('weightType') as 'FIXED' | 'VARIABLE',
+      um: inferredUm,
+      saleType,
+      unitWeight: netWeightPerCaseKg.toFixed(3),
+      weightType: inferredWeightType,
+      unitsPerCase: parsedUnitsPerCase.toString(),
+      netWeightPerUnitKg: parsedNetWeightUnit.toFixed(3),
+      netWeightPerCaseKg: netWeightPerCaseKg.toFixed(3),
       defaultPackagingId: formData.get('defaultPackagingId') as string,
     };
 
@@ -69,10 +86,15 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
     { header: 'Descrizione', accessor: 'description', className: 'font-medium' },
     { header: 'GTIN', accessor: 'gtin', className: 'font-mono text-xs text-gray-500' },
     { header: 'Origine', accessor: 'origin' },
-    { header: 'UM', accessor: 'um' },
+    { header: 'Tipologia', accessor: (item) => item.saleType || (item.um === 'PZ' ? 'PZ' : item.weightType === 'VARIABLE' ? 'KG_VARIABLE' : 'KG_FIXED') },
     { 
-      header: 'Peso', 
-      accessor: (item) => item.weightType === 'FIXED' ? `${item.unitWeight} kg` : 'Variabile' 
+      header: 'Configurazione', 
+      accessor: (item) => {
+        if ((item.saleType || '') === 'PZ') {
+          return `${item.unitsPerCase || '1'} x ${item.netWeightPerUnitKg || '0.000'} kg`;
+        }
+        return item.weightType === 'FIXED' ? `${item.netWeightPerCaseKg || item.unitWeight} kg/collo` : 'Peso variabile da bilancia';
+      }
     },
     { 
       header: 'Imballo Default', 
@@ -131,24 +153,27 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Unità di Misura</label>
-                  <select name="um" defaultValue={editingArticle?.um || 'KG'} className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                    <option value="KG">Chilogrammi (KG)</option>
-                    <option value="PZ">Pezzi (PZ)</option>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tipologia Vendita (GS1)</label>
+                  <select name="saleType" defaultValue={editingArticle?.saleType || (editingArticle?.um === 'PZ' ? 'PZ' : editingArticle?.weightType === 'VARIABLE' ? 'KG_VARIABLE' : 'KG_FIXED')} className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                    <option value="KG_VARIABLE">Articolo a peso variabile (KG)</option>
+                    <option value="KG_FIXED">Articolo a peso fisso (KG)</option>
+                    <option value="PZ">Articolo venduto a pezzi (PZ)</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Peso</label>
-                  <select name="weightType" defaultValue={editingArticle?.weightType || 'VARIABLE'} className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                    <option value="VARIABLE">Variabile (da bilancia)</option>
-                    <option value="FIXED">Fisso (predefinito)</option>
-                  </select>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Unità per Collo</label>
+                  <Input name="unitsPerCase" type="number" step="1" defaultValue={editingArticle?.unitsPerCase || '1'} />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Peso Unitario (kg)</label>
-                  <Input name="unitWeight" type="number" step="0.01" defaultValue={editingArticle?.unitWeight || '0'} />
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Peso Netto per Unità (kg)</label>
+                  <Input name="netWeightPerUnitKg" type="number" step="0.001" defaultValue={editingArticle?.netWeightPerUnitKg || '0'} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Peso Netto per Collo (kg)</label>
+                  <Input name="netWeightPerCaseKg" type="number" step="0.001" defaultValue={editingArticle?.netWeightPerCaseKg || editingArticle?.unitWeight || '0'} />
                 </div>
 
                 <div className="space-y-2">

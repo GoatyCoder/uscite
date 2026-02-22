@@ -5,8 +5,12 @@ export interface MasterArticle {
   gtin: string;
   origin: string;
   um: 'KG' | 'PZ';
+  saleType?: 'KG_VARIABLE' | 'KG_FIXED' | 'PZ';
   unitWeight: string; // Utilizzato solo se weightType è FIXED
   weightType: 'FIXED' | 'VARIABLE';
+  unitsPerCase?: string; // Esempio: 10 per confezioni 10x500g
+  netWeightPerUnitKg?: string; // Peso netto unitario in kg (es. 0.500)
+  netWeightPerCaseKg?: string; // Peso netto per collo in kg (es. 5.000)
   defaultPackagingId: string;
 }
 

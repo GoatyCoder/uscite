@@ -117,8 +117,8 @@ export default function App() {
   const [articles, setArticles] = useState<MasterArticle[]>(() => {
     const saved = localStorage.getItem('gs1_articles');
     return saved ? JSON.parse(saved) : [
-      { code: 'ART01', description: 'Mele Gala 75/80', gtin: '8012345000012', origin: '380', um: 'KG', unitWeight: '0', weightType: 'VARIABLE', defaultPackagingId: 'PACK01' },
-      { code: 'ART02', description: 'Pere Abate 14/16', gtin: '8012345000029', origin: '380', um: 'KG', unitWeight: '15', weightType: 'FIXED', defaultPackagingId: 'PACK02' }
+      { code: 'ART01', description: 'Mele Gala 75/80', gtin: '8012345000012', origin: '380', um: 'KG', saleType: 'KG_VARIABLE', unitWeight: '0', weightType: 'VARIABLE', unitsPerCase: '1', netWeightPerUnitKg: '0.000', netWeightPerCaseKg: '0.000', defaultPackagingId: 'PACK01' },
+      { code: 'ART02', description: 'Pere Abate 14/16', gtin: '8012345000029', origin: '380', um: 'KG', saleType: 'KG_FIXED', unitWeight: '15', weightType: 'FIXED', unitsPerCase: '1', netWeightPerUnitKg: '15.000', netWeightPerCaseKg: '15.000', defaultPackagingId: 'PACK02' }
     ];
   });
 

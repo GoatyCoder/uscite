@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -21,6 +21,71 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import bwipjs from 'bwip-js';
 import { jsPDF } from 'jspdf';
+
+
+const toNumber = (value?: string, fallback = 0): number => {
+  if (!value) return fallback;
+  const parsed = parseFloat(value.replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const inferSaleType = (article?: MasterArticle): 'KG_VARIABLE' | 'KG_FIXED' | 'PZ' => {
+  if (!article) return 'KG_VARIABLE';
+  if (article.saleType) return article.saleType;
+  if (article.um === 'PZ') return 'PZ';
+  return article.weightType === 'VARIABLE' ? 'KG_VARIABLE' : 'KG_FIXED';
+};
+
+const netWeightPerCase = (article?: MasterArticle): number => {
+  if (!article) return 0;
+  const explicit = toNumber(article.netWeightPerCaseKg, -1);
+  if (explicit >= 0) return explicit;
+  const units = Math.max(1, toNumber(article.unitsPerCase, 1));
+  const perUnit = toNumber(article.netWeightPerUnitKg, 0);
+  if (perUnit > 0) return units * perUnit;
+  return toNumber(article.unitWeight, 0);
+};
+
+const lineNetWeight = (article: MasterArticle | undefined, count: number, measuredGross: number, totalLineTare: number): number => {
+  const saleType = inferSaleType(article);
+  if (saleType === 'KG_VARIABLE') {
+    return Math.max(0, measuredGross - totalLineTare);
+  }
+  return Math.max(0, netWeightPerCase(article) * count);
+};
+
+const buildGs1BarcodePayload = (sscc: string, lines: PalletLine[], articles: MasterArticle[]): string => {
+  const validLines = lines.filter(line => line.articleCode);
+  if (validLines.length !== 1) {
+    return `(00)${sscc}`;
+  }
+
+  const line = validLines[0];
+  const article = articles.find(a => a.code === line.articleCode);
+  if (!article || !article.gtin) {
+    return `(00)${sscc}`;
+  }
+
+  let payload = `(00)${sscc}(01)${article.gtin}`;
+
+  if (line.batch) payload += `(10)${line.batch}`;
+
+  if (line.harvestDate) {
+    payload += `(13)${line.harvestDate.replace(/-/g, '').slice(2)}`;
+  }
+
+  if (inferSaleType(article) === 'KG_VARIABLE') {
+    const weight = Math.round(toNumber(line.netWeight, 0) * 100);
+    payload += `(3102)${weight.toString().padStart(6, '0')}`;
+  } else {
+    const quantity = Math.round(toNumber(line.count, 0));
+    if (quantity > 0) {
+      payload += `(30)${quantity}`;
+    }
+  }
+
+  return payload;
+};
 
 interface PalletCompositionPageProps {
   recipients: MasterRecipient[];
@@ -129,16 +194,11 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       const palletsTare = (newPallets || []).reduce((acc, p) => acc + parseFloat(p.tare || '0'), 0);
       const totalLineTare = (pkgTare * count) + palletsTare;
 
-      const isFixedWeight = art?.weightType === 'FIXED' || art?.um === 'PZ';
-      let net = parseFloat(line.netWeight || '0');
-      let gross = parseFloat(line.grossWeight || '0');
+      let gross = toNumber(line.grossWeight, 0);
+      const net = lineNetWeight(art, count, gross, totalLineTare);
 
-      if (isFixedWeight) {
-        const unitWeight = parseFloat(art?.unitWeight || '0');
-        net = unitWeight * count;
+      if (inferSaleType(art) !== 'KG_VARIABLE') {
         gross = net + totalLineTare;
-      } else {
-        net = Math.max(0, gross - totalLineTare);
       }
 
       return {
@@ -163,16 +223,11 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       const palletsTare = (newPallets || []).reduce((acc, p) => acc + parseFloat(p.tare || '0'), 0);
       const totalLineTare = (pkgTare * count) + palletsTare;
 
-      const isFixedWeight = art?.weightType === 'FIXED' || art?.um === 'PZ';
-      let net = parseFloat(line.netWeight || '0');
-      let gross = parseFloat(line.grossWeight || '0');
+      let gross = toNumber(line.grossWeight, 0);
+      const net = lineNetWeight(art, count, gross, totalLineTare);
 
-      if (isFixedWeight) {
-        const unitWeight = parseFloat(art?.unitWeight || '0');
-        net = unitWeight * count;
+      if (inferSaleType(art) !== 'KG_VARIABLE') {
         gross = net + totalLineTare;
-      } else {
-        net = Math.max(0, gross - totalLineTare);
       }
 
       return {
@@ -225,18 +280,10 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
       const palletsTare = (updatedLine.pallets || []).reduce((acc, p) => acc + parseFloat(p.tare || '0'), 0);
       const totalLineTare = (pkgTare * count) + palletsTare;
 
-      const isFixedWeight = art?.weightType === 'FIXED' || art?.um === 'PZ';
-
-      if (isFixedWeight) {
-        const unitWeight = parseFloat(art?.unitWeight || '0');
-        const net = unitWeight * count;
-        updatedLine.netWeight = net.toFixed(2);
-        updatedLine.grossWeight = (net + totalLineTare).toFixed(2);
-      } else {
-        const gross = parseFloat(updatedLine.grossWeight || '0');
-        const net = Math.max(0, gross - totalLineTare);
-        updatedLine.netWeight = net.toFixed(2);
-      }
+      const gross = toNumber(updatedLine.grossWeight, 0);
+      const net = lineNetWeight(art, count, gross, totalLineTare);
+      updatedLine.netWeight = net.toFixed(2);
+      updatedLine.grossWeight = (inferSaleType(art) === 'KG_VARIABLE' ? gross : (net + totalLineTare)).toFixed(2);
       
       return updatedLine;
     }));
@@ -364,7 +411,10 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
     doc.text(currentSSCC, width / 2, currentY + 20, { align: 'center' });
 
     // --- SEZIONE INFERIORE: BARCODE ---
-    let barcodeText = `(00)${currentSSCC}`;
+    const barcodeText = buildGs1BarcodePayload(currentSSCC, lines, articles);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`GS1 AI: ${barcodeText}`.substring(0, 100), margin, height - 58);
 
     try {
       const canvas = document.createElement('canvas');
