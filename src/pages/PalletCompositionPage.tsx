@@ -258,6 +258,57 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
   const finalGrossWeight = totals.gross;
   const finalTotalTare = totals.lineTare;
 
+
+  const normalizeGtin = (gtin?: string): string => (gtin || '').replace(/\D/g, '').padStart(14, '0').slice(-14);
+
+  const buildGs1Payload = () => {
+    const uniqueArticleCodes = Array.from(new Set(lines.map(line => line.articleCode).filter(Boolean))) as string[];
+    const uniqueBatches = Array.from(new Set(lines.map(line => line.batch.trim()).filter(Boolean))) as string[];
+    const uniqueHarvestDates = Array.from(new Set(lines.map(line => line.harvestDate).filter(Boolean))) as string[];
+
+    const firstArticle = articles.find(a => a.code === uniqueArticleCodes[0]);
+    const totalColli = lines.reduce((acc, line) => acc + parseInt(line.count || '0', 10), 0);
+
+    let gs1HumanReadable = `(00)${currentSSCC}`;
+    let gs1BarcodeText = `(00)${currentSSCC}`;
+
+    if (uniqueArticleCodes.length === 1 && firstArticle?.gtin) {
+      const gtin14 = normalizeGtin(firstArticle.gtin);
+      gs1HumanReadable += `(02)${gtin14}`;
+      gs1BarcodeText += `(02)${gtin14}`;
+
+      if (totalColli > 0) {
+        gs1HumanReadable += `(37)${totalColli}`;
+        gs1BarcodeText += `(37)${totalColli}`;
+      }
+    }
+
+    if (totals.net > 0) {
+      const weightAi3102 = Math.round(totals.net * 100).toString().padStart(6, '0');
+      gs1HumanReadable += `(3102)${weightAi3102}`;
+      gs1BarcodeText += `(3102)${weightAi3102}`;
+    }
+
+    if (uniqueBatches.length === 1) {
+      gs1HumanReadable += `(10)${uniqueBatches[0]}`;
+      gs1BarcodeText += `(10)${uniqueBatches[0]}`;
+    }
+
+    if (uniqueHarvestDates.length === 1) {
+      const harvest = uniqueHarvestDates[0].replace(/-/g, '');
+      if (harvest.length === 8) {
+        gs1HumanReadable += `(7007)${harvest}`;
+        gs1BarcodeText += `(7007)${harvest}`;
+      }
+    }
+
+    return {
+      gs1HumanReadable,
+      gs1BarcodeText,
+      hasMixedContent: uniqueArticleCodes.length > 1 || uniqueBatches.length > 1,
+    };
+  };
+
   const generatePDF = async () => {
     const recipient = recipients.find(r => r.code === selectedRecipientCode);
     if (!recipient) {
@@ -364,13 +415,22 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
     doc.text(currentSSCC, width / 2, currentY + 20, { align: 'center' });
 
     // --- SEZIONE INFERIORE: BARCODE ---
-    let barcodeText = `(00)${currentSSCC}`;
+    const { gs1HumanReadable, gs1BarcodeText, hasMixedContent } = buildGs1Payload();
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`GS1 AI: ${gs1HumanReadable}`.substring(0, 95), margin, height - 58);
+    if (hasMixedContent) {
+      doc.setTextColor(180, 90, 0);
+      doc.text('Nota: contenuto misto, alcuni AI opzionali non sono serializzabili in modo univoco.', margin, height - 54);
+      doc.setTextColor(0, 0, 0);
+    }
 
     try {
       const canvas = document.createElement('canvas');
       await bwipjs.toCanvas(canvas, {
         bcid: 'gs1-128',
-        text: barcodeText,
+        text: gs1BarcodeText,
         scale: 3,
         height: 32,
         includetext: true,
@@ -684,6 +744,10 @@ export const PalletCompositionPage: React.FC<PalletCompositionPageProps> = ({
             <div className="bg-white p-4 rounded-2xl border border-black/5 mb-2">
               <p className="text-[10px] uppercase font-bold text-black/40 mb-1">SSCC Assegnato</p>
               <p className="font-mono text-xl font-bold text-emerald-600">{currentSSCC}</p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-2">
+              <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Payload GS1 previsto</p>
+              <p className="font-mono text-xs text-slate-700 break-all">{buildGs1Payload().gs1HumanReadable}</p>
             </div>
             <Button 
               onClick={generatePDF}

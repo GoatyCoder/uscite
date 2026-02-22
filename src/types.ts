@@ -92,4 +92,24 @@ export interface MasterDDT {
   palletCount: number; // Posti Pallet a Terra
 }
 
+export type UserRole = 'ADMIN' | 'SPEDIZIONI' | 'OPERATORE' | 'AUDITOR';
+
+export interface AppUser {
+  id: string;
+  fullName: string;
+  role: UserRole;
+}
+
+export interface AuditEvent {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  action: string;
+  entityType: 'PALLET' | 'DDT' | 'MASTER_DATA' | 'SETTINGS' | 'SECURITY';
+  entityId?: string;
+  summary: string;
+}
+
 export type ViewMode = 'DASHBOARD' | 'PALLET' | 'ARTICOLI' | 'IMBALLAGGI' | 'PALLET_MASTER' | 'CLIENTI' | 'STORICO' | 'DDT' | 'IMPOSTAZIONI';
