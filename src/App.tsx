@@ -50,6 +50,7 @@ import { PalletsPage } from './pages/PalletsPage';
 import { PalletCompositionPage } from './pages/PalletCompositionPage';
 import { RecipientsPage } from './pages/RecipientsPage';
 import { Button } from './components/ui/Button';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 /**
  * Utility per gestire le classi Tailwind
@@ -136,9 +137,26 @@ export default function App() {
   // View State
   const [view, setView] = useState<ViewMode>('DASHBOARD');
   const [notification, setNotification] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  } | null>(null);
 
   const showNotification = (message: string, type: 'error' | 'success' = 'error') => {
     setNotification({ type, message });
+  };
+
+  const askConfirmation = (config: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }) => {
+    setConfirmDialog(config);
   };
 
   // Master Data State (Persisted)
@@ -349,15 +367,22 @@ export default function App() {
       showNotification('Impossibile eliminare una pedana già associata a un DDT. Elimina prima il DDT.');
       return;
     }
-    if (confirm('Sei sicuro di voler eliminare questa pedana dallo storico?')) {
-      setHistory(history.filter(p => p.id !== id));
-      logAuditEvent({
-        action: 'PALLET_DELETED',
-        entityType: 'PALLET',
-        entityId: id,
-        summary: `Pedana ${pallet?.sscc || id} eliminata dallo storico`,
-      });
-    }
+    askConfirmation({
+      title: 'Conferma eliminazione pedana',
+      message: 'Sei sicuro di voler eliminare questa pedana dallo storico?',
+      confirmLabel: 'Elimina pedana',
+      variant: 'danger',
+      onConfirm: () => {
+        setHistory(history.filter(p => p.id !== id));
+        logAuditEvent({
+          action: 'PALLET_DELETED',
+          entityType: 'PALLET',
+          entityId: id,
+          summary: `Pedana ${pallet?.sscc || id} eliminata dallo storico`,
+        });
+        showNotification('Pedana eliminata con successo.', 'success');
+      }
+    });
   };
 
   const deleteDdt = (id: string) => {
@@ -365,17 +390,67 @@ export default function App() {
       showNotification('Il ruolo corrente non può eliminare DDT emessi.');
       return;
     }
-    if (confirm('Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.')) {
-      const targetDdt = ddts.find(d => d.id === id);
-      setDdts(ddts.filter(d => d.id !== id));
-      setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
-      logAuditEvent({
-        action: 'DDT_DELETED',
-        entityType: 'DDT',
-        entityId: id,
-        summary: `DDT ${targetDdt?.number || id} eliminato`,
-      });
-    }
+    askConfirmation({
+      title: 'Conferma eliminazione DDT',
+      message: 'Sei sicuro di voler eliminare questo DDT? Le pedane associate torneranno disponibili.',
+      confirmLabel: 'Elimina DDT',
+      variant: 'danger',
+      onConfirm: () => {
+        const targetDdt = ddts.find(d => d.id === id);
+        setDdts(ddts.filter(d => d.id !== id));
+        setHistory(history.map(p => p.ddtId === id ? { ...p, ddtId: undefined } : p));
+        logAuditEvent({
+          action: 'DDT_DELETED',
+          entityType: 'DDT',
+          entityId: id,
+          summary: `DDT ${targetDdt?.number || id} eliminato`,
+        });
+        showNotification('DDT eliminato con successo.', 'success');
+      }
+    });
+  };
+
+  const exportDataAsJson = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      companyPrefix,
+      serialNumber,
+      senderName,
+      senderAddress,
+      senderVat,
+      senderPhone,
+      senderEmail,
+      currentUser,
+      articles,
+      packagings,
+      palletMasters,
+      recipients,
+      history,
+      ddts,
+      auditLog,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_gs1_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Backup JSON esportato con successo.', 'success');
+  };
+
+  const resetAllData = () => {
+    askConfirmation({
+      title: 'Conferma reset totale',
+      message: 'Questa operazione cancellerà anagrafiche, storico, DDT e audit log locali. Vuoi continuare?',
+      confirmLabel: 'Resetta tutto',
+      variant: 'danger',
+      onConfirm: () => {
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
   };
 
   const startEditDdt = (ddt: MasterDDT) => {
@@ -1353,7 +1428,21 @@ export default function App() {
                       className="w-full bg-white border border-black/10 rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                  <button onClick={() => setHistory([])} className="text-red-500 text-xs font-bold hover:underline whitespace-nowrap">Svuota Archivio</button>
+                  <button
+                    onClick={() => askConfirmation({
+                      title: 'Conferma svuotamento archivio',
+                      message: 'Vuoi davvero svuotare tutto lo storico pedane?',
+                      confirmLabel: 'Svuota archivio',
+                      variant: 'danger',
+                      onConfirm: () => {
+                        setHistory([]);
+                        showNotification('Archivio pedane svuotato.', 'success');
+                      }
+                    })}
+                    className="text-red-500 text-xs font-bold hover:underline whitespace-nowrap"
+                  >
+                    Svuota Archivio
+                  </button>
                 </div>
               </header>
               
@@ -1610,10 +1699,10 @@ export default function App() {
                   <p className="text-sm text-white/40">Esporta i dati locali per sicurezza o migrazione</p>
                 </div>
                 <div className="flex gap-3">
-                  <button className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                  <button onClick={exportDataAsJson} className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Esporta JSON
                   </button>
-                  <button className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
+                  <button onClick={resetAllData} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-xl text-sm font-bold transition-all">
                     Reset Totale
                   </button>
                 </div>
@@ -1622,6 +1711,21 @@ export default function App() {
           )}
         </main>
       </div>
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        title={confirmDialog?.title || ''}
+        message={confirmDialog?.message || ''}
+        confirmLabel={confirmDialog?.confirmLabel}
+        variant={confirmDialog?.variant || 'default'}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          if (confirmDialog) {
+            const action = confirmDialog.onConfirm;
+            setConfirmDialog(null);
+            action();
+          }
+        }}
+      />
     </div>
   );
 }

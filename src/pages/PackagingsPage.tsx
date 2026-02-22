@@ -4,6 +4,7 @@ import { MasterDataLayout } from '../components/master-data/MasterDataLayout';
 import { MasterDataTable, Column } from '../components/master-data/MasterDataTable';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { X } from 'lucide-react';
 
 interface PackagingsPageProps {
@@ -19,6 +20,7 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPackaging, setEditingPackaging] = useState<MasterPackaging | null>(null);
+  const [packagingToDelete, setPackagingToDelete] = useState<MasterPackaging | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAdd = () => {
@@ -32,9 +34,7 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
   };
 
   const handleDelete = (packaging: MasterPackaging) => {
-    if (confirm(`Sei sicuro di voler eliminare l'imballaggio ${packaging.name}?`)) {
-      onDelete(packaging);
-    }
+    setPackagingToDelete(packaging);
   };
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
@@ -151,6 +151,21 @@ export const PackagingsPage: React.FC<PackagingsPageProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!packagingToDelete}
+        title="Conferma eliminazione imballaggio"
+        message={`Vuoi davvero eliminare l'imballaggio ${packagingToDelete?.name || ''}? Questa operazione non è reversibile.`}
+        confirmLabel="Elimina imballaggio"
+        variant="danger"
+        onCancel={() => setPackagingToDelete(null)}
+        onConfirm={() => {
+          if (packagingToDelete) {
+            onDelete(packagingToDelete);
+            setPackagingToDelete(null);
+          }
+        }}
+      />
     </MasterDataLayout>
   );
 };

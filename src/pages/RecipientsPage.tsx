@@ -4,6 +4,7 @@ import { MasterDataLayout } from '../components/master-data/MasterDataLayout';
 import { MasterDataTable, Column } from '../components/master-data/MasterDataTable';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { X } from 'lucide-react';
 
 interface RecipientsPageProps {
@@ -19,6 +20,7 @@ export const RecipientsPage: React.FC<RecipientsPageProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecipient, setEditingRecipient] = useState<MasterRecipient | null>(null);
+  const [recipientToDelete, setRecipientToDelete] = useState<MasterRecipient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAdd = () => {
@@ -32,9 +34,7 @@ export const RecipientsPage: React.FC<RecipientsPageProps> = ({
   };
 
   const handleDelete = (recipient: MasterRecipient) => {
-    if (confirm(`Sei sicuro di voler eliminare il cliente ${recipient.name}?`)) {
-      onDelete(recipient);
-    }
+    setRecipientToDelete(recipient);
   };
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
@@ -137,6 +137,21 @@ export const RecipientsPage: React.FC<RecipientsPageProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!recipientToDelete}
+        title="Conferma eliminazione cliente"
+        message={`Vuoi davvero eliminare il cliente ${recipientToDelete?.name || ''}? Questa operazione non è reversibile.`}
+        confirmLabel="Elimina cliente"
+        variant="danger"
+        onCancel={() => setRecipientToDelete(null)}
+        onConfirm={() => {
+          if (recipientToDelete) {
+            onDelete(recipientToDelete);
+            setRecipientToDelete(null);
+          }
+        }}
+      />
     </MasterDataLayout>
   );
 };
