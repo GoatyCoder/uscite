@@ -1,0 +1,5 @@
+{
+  "name": "Remix: Generatore Etichette GS1-128 Pallet",
+  "description": "Applicazione per la generazione di etichette logistiche pallet conformi agli standard GS1 Italy per il settore agroalimentare.",
+  "requestFramePermissions": []
+}
