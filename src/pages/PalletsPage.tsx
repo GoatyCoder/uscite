@@ -45,12 +45,10 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
       id: editingPallet?.id || crypto.randomUUID(),
       name: formData.get('name') as string,
       tare: formData.get('tare') as string,
-      isPooling: formData.get('isPooling') === 'on',
       width: formData.get('width') as string,
       depth: formData.get('depth') as string,
       height: formData.get('height') as string,
       maxLoad: formData.get('maxLoad') as string,
-      material: formData.get('material') as string,
     };
 
     onSave(newPallet);
@@ -68,18 +66,6 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
     {
       header: 'Dimensioni (mm)',
       accessor: (item) => `${item.width || '-'} × ${item.depth || '-'} × ${item.height || '-'}`,
-    },
-    {
-      header: 'Tipo',
-      accessor: (item) => item.isPooling ? (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          Pooling (EPAL/CHEP)
-        </span>
-      ) : (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          A Perdere
-        </span>
-      )
     },
   ];
 
@@ -129,28 +115,12 @@ export const PalletsPage: React.FC<PalletsPageProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Materiale</label>
-                  <Input name="material" defaultValue={editingPallet?.material} placeholder="Es. Legno" />
-                </div>
-
-                <div className="space-y-2">
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Dimensioni (mm)</label>
                   <div className="grid grid-cols-3 gap-2">
                     <Input name="width" type="number" defaultValue={editingPallet?.width} placeholder="Largh." />
                     <Input name="depth" type="number" defaultValue={editingPallet?.depth} placeholder="Prof." />
                     <Input name="height" type="number" defaultValue={editingPallet?.height} placeholder="Alt." />
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <input 
-                    type="checkbox" 
-                    name="isPooling" 
-                    id="isPooling" 
-                    defaultChecked={editingPallet?.isPooling}
-                    className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <label htmlFor="isPooling" className="text-sm font-medium text-gray-700">Pallet a rendere (Pooling)</label>
                 </div>
               </div>
 

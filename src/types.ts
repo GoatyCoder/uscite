@@ -23,12 +23,10 @@ export interface MasterPallet {
   id: string;
   name: string;
   tare: string;
-  isPooling: boolean;
   width?: string; // Larghezza in mm
   depth?: string; // Profondità in mm
   height?: string; // Altezza in mm
   maxLoad?: string; // Portata massima in kg
-  material?: string; // Es. Legno, Plastica
 }
 
 export interface MasterRecipient {

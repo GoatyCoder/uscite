@@ -181,10 +181,10 @@ export default function App() {
   const [palletMasters, setPalletMasters] = useState<MasterPallet[]>(() => {
     const saved = localStorage.getItem('gs1_pallets');
     return saved ? JSON.parse(saved) : [
-      { id: 'PAL01', name: 'EPAL EUR 1 (1200x800)', tare: '25', isPooling: true, width: '1200', depth: '800', height: '144', maxLoad: '1500', material: 'Legno' },
-      { id: 'PAL02', name: 'CPR PR12 Plastica Riciclata (1200x800)', tare: '18', isPooling: true, width: '1200', depth: '800', height: '150', maxLoad: '1500', material: 'Plastica riciclata' },
-      { id: 'PAL03', name: 'CPR Pallet Legno (1200x800)', tare: '23', isPooling: true, width: '1200', depth: '800', height: '144', maxLoad: '1500', material: 'Legno' },
-      { id: 'PAL04', name: 'Mezza pedana (800x600)', tare: '12', isPooling: false, width: '800', depth: '600', height: '130', maxLoad: '750', material: 'Legno' }
+      { id: 'PAL01', name: 'EPAL EUR 1 (1200x800)', tare: '25', width: '1200', depth: '800', height: '144', maxLoad: '1500' },
+      { id: 'PAL02', name: 'CPR PR12 Plastica Riciclata (1200x800)', tare: '18', width: '1200', depth: '800', height: '150', maxLoad: '1500' },
+      { id: 'PAL03', name: 'CPR Pallet Legno (1200x800)', tare: '23', width: '1200', depth: '800', height: '144', maxLoad: '1500' },
+      { id: 'PAL04', name: 'Mezza pedana (800x600)', tare: '12', width: '800', depth: '600', height: '130', maxLoad: '750' }
     ];
   });
 
